@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Career Boost AI India API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User operations
+  - name: resumes
+    description: Resume operations
+  - name: cover-letters
+    description: Cover letter operations
+  - name: interview
+    description: Interview practice operations
+  - name: payments
+    description: Payment and subscription operations
+  - name: admin
+    description: Admin operations
+  - name: stats
+    description: Statistics operations
+  - name: supporters
+    description: Support/donation operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +40,1168 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Users ───────────────────────────────────────────────────────────────────
+  /users/register:
+    post:
+      operationId: registerUser
+      tags: [users]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithToken"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/login:
+    post:
+      operationId: loginUser
+      tags: [users]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithToken"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/me/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [users]
+      summary: Get user dashboard statistics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # ─── Resumes ─────────────────────────────────────────────────────────────────
+  /resumes:
+    get:
+      operationId: listResumes
+      tags: [resumes]
+      summary: List user resumes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
+    post:
+      operationId: createResume
+      tags: [resumes]
+      summary: Create a new resume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+
+  /resumes/{id}:
+    get:
+      operationId: getResume
+      tags: [resumes]
+      summary: Get a resume by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateResume
+      tags: [resumes]
+      summary: Update a resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+    delete:
+      operationId: deleteResume
+      tags: [resumes]
+      summary: Delete a resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /resumes/{id}/score:
+    get:
+      operationId: getResumeScore
+      tags: [resumes]
+      summary: Get ATS score for a resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeScore"
+
+  /resumes/analyze:
+    post:
+      operationId: analyzeResume
+      tags: [resumes]
+      summary: Analyze resume text and return score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeAnalysisInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeScore"
+
+  /resumes/job-match:
+    post:
+      operationId: analyzeJobMatch
+      tags: [resumes]
+      summary: Analyze match between resume and job description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobMatchInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobMatchResult"
+
+  # ─── Cover Letters ────────────────────────────────────────────────────────────
+  /cover-letters:
+    get:
+      operationId: listCoverLetters
+      tags: [cover-letters]
+      summary: List user cover letters
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoverLetter"
+    post:
+      operationId: createCoverLetter
+      tags: [cover-letters]
+      summary: Generate a cover letter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoverLetterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverLetter"
+
+  /cover-letters/{id}:
+    get:
+      operationId: getCoverLetter
+      tags: [cover-letters]
+      summary: Get a cover letter by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverLetter"
+    delete:
+      operationId: deleteCoverLetter
+      tags: [cover-letters]
+      summary: Delete a cover letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Interview ────────────────────────────────────────────────────────────────
+  /interview/sessions:
+    get:
+      operationId: listInterviewSessions
+      tags: [interview]
+      summary: List interview sessions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterviewSession"
+    post:
+      operationId: createInterviewSession
+      tags: [interview]
+      summary: Start a new interview session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewSessionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /interview/sessions/{id}:
+    get:
+      operationId: getInterviewSession
+      tags: [interview]
+      summary: Get an interview session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewSession"
+
+  /interview/answer:
+    post:
+      operationId: submitInterviewAnswer
+      tags: [interview]
+      summary: Submit answer and get AI feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewAnswerInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewFeedback"
+
+  /interview/improve-english:
+    post:
+      operationId: improveEnglish
+      tags: [interview]
+      summary: Improve English grammar and professionalism
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnglishImprovementInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnglishImprovementResult"
+
+  # ─── Payments ─────────────────────────────────────────────────────────────────
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payment requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: submitPayment
+      tags: [payments]
+      summary: Submit a payment verification request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/qr:
+    get:
+      operationId: getPaymentQr
+      tags: [payments]
+      summary: Get current payment QR code URL
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCode"
+
+  # ─── Supporters ───────────────────────────────────────────────────────────────
+  /supporters:
+    post:
+      operationId: submitSupport
+      tags: [supporters]
+      summary: Submit a support/donation record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupporterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supporter"
+
+  /supporters/qr:
+    get:
+      operationId: getSupportQr
+      tags: [supporters]
+      summary: Get support QR code
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCode"
+
+  # ─── Stats (public) ───────────────────────────────────────────────────────────
+  /stats/public:
+    get:
+      operationId: getPublicStats
+      tags: [stats]
+      summary: Get public platform statistics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicStats"
+
+  # ─── Admin ────────────────────────────────────────────────────────────────────
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: Admin — list all users
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+
+  /admin/payments:
+    get:
+      operationId: adminListPayments
+      tags: [admin]
+      summary: Admin — list all payment requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /admin/payments/{id}/approve:
+    post:
+      operationId: adminApprovePayment
+      tags: [admin]
+      summary: Admin — approve a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /admin/payments/{id}/reject:
+    post:
+      operationId: adminRejectPayment
+      tags: [admin]
+      summary: Admin — reject a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /admin/qr:
+    put:
+      operationId: adminUpdateQr
+      tags: [admin]
+      summary: Admin — update QR code URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QrCodeInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCode"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Admin — get full statistics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # ─── User schemas ─────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, name, email, isPremium, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        isPremium:
+          type: boolean
+        premiumExpiresAt:
+          type: ["string", "null"]
+        resumeCount:
+          type: integer
+        coverLetterCount:
+          type: integer
+        interviewCount:
+          type: integer
+        createdAt:
+          type: string
+
+    UserRegistration:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        mobile:
+          type: string
+        city:
+          type: string
+
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    UserWithToken:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [resumeCount, interviewCount, coverLetterCount, profileStrength, weeklyActivity]
+      properties:
+        resumeCount:
+          type: integer
+        interviewCount:
+          type: integer
+        coverLetterCount:
+          type: integer
+        profileStrength:
+          type: integer
+        isPremium:
+          type: boolean
+        weeklyActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyActivityItem"
+        recentResumes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resume"
+
+    WeeklyActivityItem:
+      type: object
+      required: [day, count]
+      properties:
+        day:
+          type: string
+        count:
+          type: integer
+
+    # ─── Resume schemas ───────────────────────────────────────────────────────
+    Resume:
+      type: object
+      required: [id, userId, title, template, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        fullName:
+          type: ["string", "null"]
+        mobile:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        education:
+          type: ["string", "null"]
+        college:
+          type: ["string", "null"]
+        skills:
+          type: ["string", "null"]
+        projects:
+          type: ["string", "null"]
+        workExperience:
+          type: ["string", "null"]
+        certifications:
+          type: ["string", "null"]
+        languages:
+          type: ["string", "null"]
+        template:
+          type: string
+        generatedContent:
+          type: ["string", "null"]
+        atsScore:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ResumeInput:
+      type: object
+      required: [title, template]
+      properties:
+        title:
+          type: string
+        fullName:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        city:
+          type: string
+        education:
+          type: string
+        college:
+          type: string
+        skills:
+          type: string
+        projects:
+          type: string
+        workExperience:
+          type: string
+        certifications:
+          type: string
+        languages:
+          type: string
+        template:
+          type: string
+
+    ResumeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        fullName:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        city:
+          type: string
+        education:
+          type: string
+        college:
+          type: string
+        skills:
+          type: string
+        projects:
+          type: string
+        workExperience:
+          type: string
+        certifications:
+          type: string
+        languages:
+          type: string
+        template:
+          type: string
+        generatedContent:
+          type: string
+        atsScore:
+          type: integer
+
+    ResumeScore:
+      type: object
+      required: [overallScore, atsScore, skillsScore, formattingScore, suggestions]
+      properties:
+        overallScore:
+          type: integer
+        atsScore:
+          type: integer
+        skillsScore:
+          type: integer
+        formattingScore:
+          type: integer
+        suggestions:
+          type: array
+          items:
+            type: string
+        strengths:
+          type: array
+          items:
+            type: string
+
+    ResumeAnalysisInput:
+      type: object
+      required: [resumeText]
+      properties:
+        resumeText:
+          type: string
+        jobRole:
+          type: string
+
+    JobMatchInput:
+      type: object
+      required: [resumeText, jobDescription]
+      properties:
+        resumeText:
+          type: string
+        jobDescription:
+          type: string
+
+    JobMatchResult:
+      type: object
+      required: [matchPercentage, missingSkills, suggestions]
+      properties:
+        matchPercentage:
+          type: integer
+        missingSkills:
+          type: array
+          items:
+            type: string
+        matchedSkills:
+          type: array
+          items:
+            type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    # ─── Cover Letter schemas ─────────────────────────────────────────────────
+    CoverLetter:
+      type: object
+      required: [id, userId, jobRole, companyName, experienceLevel, content, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        jobRole:
+          type: string
+        companyName:
+          type: string
+        experienceLevel:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+
+    CoverLetterInput:
+      type: object
+      required: [jobRole, companyName, experienceLevel]
+      properties:
+        jobRole:
+          type: string
+        companyName:
+          type: string
+        experienceLevel:
+          type: string
+        additionalInfo:
+          type: string
+
+    # ─── Interview schemas ────────────────────────────────────────────────────
+    InterviewSession:
+      type: object
+      required: [id, userId, category, questionCount, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        category:
+          type: string
+        questionCount:
+          type: integer
+        avgCommunicationScore:
+          type: ["integer", "null"]
+        avgConfidenceScore:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    InterviewSessionInput:
+      type: object
+      required: [category]
+      properties:
+        category:
+          type: string
+
+    InterviewAnswerInput:
+      type: object
+      required: [sessionId, question, answer]
+      properties:
+        sessionId:
+          type: integer
+        question:
+          type: string
+        answer:
+          type: string
+        category:
+          type: string
+
+    InterviewFeedback:
+      type: object
+      required: [feedback, communicationScore, confidenceScore, improvedAnswer]
+      properties:
+        feedback:
+          type: string
+        communicationScore:
+          type: integer
+        confidenceScore:
+          type: integer
+        improvedAnswer:
+          type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        improvements:
+          type: array
+          items:
+            type: string
+
+    EnglishImprovementInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+        context:
+          type: string
+
+    EnglishImprovementResult:
+      type: object
+      required: [improvedText, corrections, professionalTips]
+      properties:
+        improvedText:
+          type: string
+        corrections:
+          type: array
+          items:
+            type: string
+        professionalTips:
+          type: array
+          items:
+            type: string
+
+    # ─── Payment schemas ──────────────────────────────────────────────────────
+    Payment:
+      type: object
+      required: [id, fullName, mobile, upiTransactionId, amount, plan, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        fullName:
+          type: string
+        mobile:
+          type: string
+        upiTransactionId:
+          type: string
+        amount:
+          type: integer
+        plan:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+        reviewedAt:
+          type: ["string", "null"]
+
+    PaymentInput:
+      type: object
+      required: [fullName, mobile, upiTransactionId, amount, plan]
+      properties:
+        fullName:
+          type: string
+        mobile:
+          type: string
+        upiTransactionId:
+          type: string
+        amount:
+          type: integer
+        plan:
+          type: string
+
+    QrCode:
+      type: object
+      required: [imageUrl, type]
+      properties:
+        imageUrl:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          type: ["string", "null"]
+
+    QrCodeInput:
+      type: object
+      required: [imageUrl, type]
+      properties:
+        imageUrl:
+          type: string
+        type:
+          type: string
+
+    # ─── Supporter schemas ────────────────────────────────────────────────────
+    Supporter:
+      type: object
+      required: [id, name, mobile, amount, upiTransactionId, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        mobile:
+          type: string
+        amount:
+          type: integer
+        upiTransactionId:
+          type: string
+        createdAt:
+          type: string
+
+    SupporterInput:
+      type: object
+      required: [name, mobile, amount, upiTransactionId]
+      properties:
+        name:
+          type: string
+        mobile:
+          type: string
+        amount:
+          type: integer
+        upiTransactionId:
+          type: string
+
+    # ─── Stats schemas ────────────────────────────────────────────────────────
+    PublicStats:
+      type: object
+      required: [resumesCreated, interviewsPracticed, activeUsers, successStories]
+      properties:
+        resumesCreated:
+          type: integer
+        interviewsPracticed:
+          type: integer
+        activeUsers:
+          type: integer
+        successStories:
+          type: integer
+
+    AdminStats:
+      type: object
+      required: [totalUsers, totalResumes, totalInterviews, totalCoverLetters, totalRevenue, pendingPayments, totalSupporters]
+      properties:
+        totalUsers:
+          type: integer
+        totalResumes:
+          type: integer
+        totalInterviews:
+          type: integer
+        totalCoverLetters:
+          type: integer
+        totalRevenue:
+          type: integer
+        pendingPayments:
+          type: integer
+        totalSupporters:
+          type: integer
+
+    # ─── Admin schemas ────────────────────────────────────────────────────────
+    AdminUser:
+      type: object
+      required: [id, name, email, isPremium, resumeCount, interviewCount, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: ["string", "null"]
+        isPremium:
+          type: boolean
+        premiumExpiresAt:
+          type: ["string", "null"]
+        resumeCount:
+          type: integer
+        interviewCount:
+          type: integer
+        coverLetterCount:
+          type: integer
+        createdAt:
+          type: string
+
+    AdminLoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AdminSession:
+      type: object
+      required: [token, role]
+      properties:
+        token:
+          type: string
+        role:
+          type: string

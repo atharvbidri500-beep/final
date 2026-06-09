@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Career Boost AI India"
+version = "1.0.0"
+id = "artifacts/career-boost"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24558
+
+[services.development]
+run = "pnpm --filter @workspace/career-boost run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/career-boost", "run", "build" ]
+publicDir = "artifacts/career-boost/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24558"
+BASE_PATH = "/"

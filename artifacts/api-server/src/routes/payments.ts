@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { eq, desc, sql } from "drizzle-orm";
-import { db, paymentsTable, usersTable, qrCodesTable, supportersTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
+import { db, paymentsTable, qrCodesTable, supportersTable, usersTable } from "@workspace/db";
+import { sendPaymentNotification } from "../lib/email.js";
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.post("/payments", async (req, res): Promise<void> => {
     res.status(400).json({ error: "All fields are required" });
     return;
   }
+
   const [payment] = await db.insert(paymentsTable).values({
     userId: userId ?? null,
     fullName,
@@ -42,24 +44,38 @@ router.post("/payments", async (req, res): Promise<void> => {
     plan,
     status: "pending",
   }).returning();
+
+  // Look up user email if logged in
+  let userEmail: string | null = null;
+  if (userId) {
+    const [user] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, userId));
+    userEmail = user?.email ?? null;
+  }
+
+  // Send admin email notification (non-blocking)
+  sendPaymentNotification({
+    paymentId: payment.id,
+    fullName: payment.fullName,
+    mobile: payment.mobile,
+    upiTransactionId: payment.upiTransactionId,
+    amount: payment.amount,
+    plan: payment.plan,
+    submittedAt: payment.createdAt.toISOString(),
+    userEmail,
+  }).catch(() => {});
+
   res.status(201).json(formatPayment(payment));
 });
 
 router.get("/payments/qr", async (req, res): Promise<void> => {
   const [qr] = await db.select().from(qrCodesTable).where(eq(qrCodesTable.type, "payment"));
-  if (!qr) {
-    res.json({ imageUrl: "", type: "payment", updatedAt: null });
-    return;
-  }
+  if (!qr) { res.json({ imageUrl: "", type: "payment", updatedAt: null }); return; }
   res.json({ imageUrl: qr.imageUrl, type: qr.type, updatedAt: qr.updatedAt?.toISOString() ?? null });
 });
 
 router.get("/supporters/qr", async (req, res): Promise<void> => {
   const [qr] = await db.select().from(qrCodesTable).where(eq(qrCodesTable.type, "support"));
-  if (!qr) {
-    res.json({ imageUrl: "", type: "support", updatedAt: null });
-    return;
-  }
+  if (!qr) { res.json({ imageUrl: "", type: "support", updatedAt: null }); return; }
   res.json({ imageUrl: qr.imageUrl, type: qr.type, updatedAt: qr.updatedAt?.toISOString() ?? null });
 });
 

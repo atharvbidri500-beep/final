@@ -8,6 +8,14 @@ const router = Router();
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "careerboost@admin2024";
 
+function adminAuth(req: any, res: any): boolean {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return false; }
+  const payload = jwt.verify(auth.slice(7));
+  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return false; }
+  return true;
+}
+
 router.post("/admin/login", async (req, res): Promise<void> => {
   const { username, password } = req.body;
   if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
@@ -19,11 +27,7 @@ router.post("/admin/login", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/users", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
-
+  if (!adminAuth(req, res)) return;
   const users = await db.select().from(usersTable).orderBy(desc(usersTable.createdAt));
   const result = await Promise.all(users.map(async (u) => {
     const [rc] = await db.select({ count: sql<number>`count(*)` }).from(resumesTable).where(eq(resumesTable.userId, u.id));
@@ -46,11 +50,7 @@ router.get("/admin/users", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/payments", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
-
+  if (!adminAuth(req, res)) return;
   const payments = await db.select().from(paymentsTable).orderBy(desc(paymentsTable.createdAt));
   res.json(payments.map(p => ({
     id: p.id,
@@ -66,49 +66,40 @@ router.get("/admin/payments", async (req, res): Promise<void> => {
   })));
 });
 
-router.post("/admin/payments/:id/approve", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
+// Lightweight endpoint for badge — no heavy joins
+router.get("/admin/payments/pending-count", async (req, res): Promise<void> => {
+  if (!adminAuth(req, res)) return;
+  const [row] = await db.select({ count: sql<number>`count(*)` }).from(paymentsTable).where(eq(paymentsTable.status, "pending"));
+  res.json({ count: Number(row?.count ?? 0) });
+});
 
+router.post("/admin/payments/:id/approve", async (req, res): Promise<void> => {
+  if (!adminAuth(req, res)) return;
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   const [payment] = await db.update(paymentsTable).set({ status: "approved", reviewedAt: new Date() }).where(eq(paymentsTable.id, id)).returning();
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
-
   if (payment.userId) {
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + (payment.plan === "yearly" ? 12 : 1));
     await db.update(usersTable).set({ isPremium: true, premiumExpiresAt: expiresAt }).where(eq(usersTable.id, payment.userId));
   }
-
   res.json({ id: payment.id, userId: payment.userId ?? null, fullName: payment.fullName, mobile: payment.mobile, upiTransactionId: payment.upiTransactionId, amount: payment.amount, plan: payment.plan, status: payment.status, createdAt: payment.createdAt.toISOString(), reviewedAt: payment.reviewedAt?.toISOString() ?? null });
 });
 
 router.post("/admin/payments/:id/reject", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
-
+  if (!adminAuth(req, res)) return;
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   const [payment] = await db.update(paymentsTable).set({ status: "rejected", reviewedAt: new Date() }).where(eq(paymentsTable.id, id)).returning();
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
-
   res.json({ id: payment.id, userId: payment.userId ?? null, fullName: payment.fullName, mobile: payment.mobile, upiTransactionId: payment.upiTransactionId, amount: payment.amount, plan: payment.plan, status: payment.status, createdAt: payment.createdAt.toISOString(), reviewedAt: payment.reviewedAt?.toISOString() ?? null });
 });
 
 router.put("/admin/qr", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
-
+  if (!adminAuth(req, res)) return;
   const { imageUrl, type } = req.body;
   if (!imageUrl || !type) { res.status(400).json({ error: "imageUrl and type are required" }); return; }
-
   const existing = await db.select().from(qrCodesTable).where(eq(qrCodesTable.type, type));
   let qr;
   if (existing.length > 0) {
@@ -120,11 +111,7 @@ router.put("/admin/qr", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/stats", async (req, res): Promise<void> => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const payload = jwt.verify(auth.slice(7));
-  if (!payload || payload.role !== "admin") { res.status(401).json({ error: "Admin access required" }); return; }
-
+  if (!adminAuth(req, res)) return;
   const [totalUsers] = await db.select({ count: sql<number>`count(*)` }).from(usersTable);
   const [totalResumes] = await db.select({ count: sql<number>`count(*)` }).from(resumesTable);
   const [totalInterviews] = await db.select({ count: sql<number>`count(*)` }).from(interviewSessionsTable);
@@ -132,7 +119,6 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
   const [revenueResult] = await db.select({ total: sql<number>`coalesce(sum(amount), 0)` }).from(paymentsTable).where(eq(paymentsTable.status, "approved"));
   const [pendingPayments] = await db.select({ count: sql<number>`count(*)` }).from(paymentsTable).where(eq(paymentsTable.status, "pending"));
   const [totalSupporters] = await db.select({ count: sql<number>`count(*)` }).from(supportersTable);
-
   res.json({
     totalUsers: Number(totalUsers?.count ?? 0),
     totalResumes: Number(totalResumes?.count ?? 0),

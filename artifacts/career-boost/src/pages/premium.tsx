@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Crown, CheckCircle2, Loader2, QrCode, Copy } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Crown, CheckCircle2, Loader2, QrCode, Copy, Rocket, Shield, Zap } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,29 @@ import { getToken } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 
 const PLANS = [
-  { id: "monthly", name: "Pro Monthly", price: 149, desc: "per month", features: ["Unlimited resumes", "Unlimited interviews", "Unlimited cover letters", "Full ATS analysis", "Job match AI", "Priority support"] },
-  { id: "yearly", name: "Pro Yearly", price: 999, desc: "per year — save ₹789", features: ["Everything in Monthly", "Priority email support", "Premium templates", "Early access features", "Career tips newsletter"] },
+  {
+    id: "monthly",
+    name: "Pro Monthly",
+    price: 99,
+    originalPrice: 149,
+    period: "per month",
+    badge: null,
+    features: ["Unlimited ATS resumes", "Unlimited interview practice", "Unlimited cover letters", "Full job match AI", "Resume scoring & tips", "Priority support"],
+  },
+  {
+    id: "yearly",
+    name: "Pro Yearly",
+    price: 499,
+    originalPrice: 999,
+    period: "per year",
+    badge: "Best Value — Save ₹689",
+    features: ["Everything in Monthly", "Save 58% vs monthly", "Early access features", "Premium resume templates", "1-on-1 career tips", "Lifetime discount"],
+  },
 ];
+
+const UPI_ID = "9579841359@fam";
+
+function validateMobile(m: string) { return /^[6-9]\d{9}$/.test(m.replace(/\s/g, "")); }
 
 export default function Premium() {
   const { toast } = useToast();
@@ -30,13 +50,11 @@ export default function Premium() {
 
   const selectedAmount = PLANS.find(p => p.id === selectedPlan)?.price ?? 0;
 
-  const UPI_ID = "9579841359@fam";
-
   async function submitPayment() {
-    if (!form.fullName || !form.mobile || !form.upiTransactionId) {
-      toast({ title: "All fields are required", variant: "destructive" });
-      return;
-    }
+    if (!form.fullName.trim()) { toast({ title: "Enter your full name", variant: "destructive" }); return; }
+    if (!validateMobile(form.mobile)) { toast({ title: "Invalid mobile number", description: "Enter a valid 10-digit Indian mobile number", variant: "destructive" }); return; }
+    if (!form.upiTransactionId.trim()) { toast({ title: "Enter UPI Transaction ID", variant: "destructive" }); return; }
+
     setSubmitting(true);
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -45,17 +63,16 @@ export default function Premium() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          fullName: form.fullName,
-          mobile: form.mobile,
-          upiTransactionId: form.upiTransactionId,
+          fullName: form.fullName.trim(),
+          mobile: form.mobile.trim(),
+          upiTransactionId: form.upiTransactionId.trim(),
           amount: selectedAmount,
           plan: selectedPlan,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Submission failed");
       setSubmitted(true);
-      toast({ title: "Payment submitted! 🎉 Admin will verify within 1 hour." });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -66,14 +83,40 @@ export default function Premium() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-sm w-full text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.1 }}
+            className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center mx-auto mb-5"
+          >
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </motion.div>
+          <h2 className="text-2xl font-bold mb-2">Payment Submitted! 🎉</h2>
+          <p className="text-muted-foreground mb-2">
+            We've received your payment details and notified our admin.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Your <span className="font-semibold text-violet-700">HirePilot Pro</span> access will be activated within <span className="font-semibold">1-2 hours</span> after verification.
+          </p>
+          <div className="p-4 rounded-2xl bg-violet-50 border border-violet-200 text-sm text-violet-800 mb-6 text-left">
+            <div className="font-semibold mb-1">What happens next?</div>
+            <ol className="space-y-1 text-violet-700 list-decimal list-inside text-xs">
+              <li>Admin verifies your UPI transaction ID</li>
+              <li>Your account is upgraded to Pro</li>
+              <li>All Pro features unlock instantly</li>
+            </ol>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Payment Submitted!</h2>
-          <p className="text-muted-foreground mb-6">Our admin will verify your payment and activate your Pro account within 1-2 hours. You'll get full access once verified.</p>
-          <Button onClick={() => { setSubmitted(false); setSelectedPlan(null); setForm({ fullName: "", mobile: "", upiTransactionId: "" }); }} variant="outline" className="w-full">
-            Back to Pricing
+          <Button
+            onClick={() => { setSubmitted(false); setSelectedPlan(null); setForm({ fullName: "", mobile: "", upiTransactionId: "" }); }}
+            variant="outline"
+            className="w-full"
+          >
+            Back to Plans
           </Button>
         </motion.div>
       </div>
@@ -83,14 +126,31 @@ export default function Premium() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+      <div className="pt-20 pb-28 px-4 max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium mb-4">
-              <Crown className="w-4 h-4" /> Career Boost Pro
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-50 to-amber-50 border border-violet-200 text-violet-700 text-sm font-semibold mb-4">
+              <Crown className="w-4 h-4 fill-amber-400 text-amber-500" /> HirePilot Pro
             </div>
-            <h1 className="text-2xl font-bold mb-2">Unlock Unlimited Access</h1>
-            <p className="text-muted-foreground">Pay via UPI — no credit card needed. Verified by admin within 1 hour.</p>
+            <h1 className="text-3xl font-bold mb-2">Unlock Your Career Potential</h1>
+            <p className="text-muted-foreground">Pay via UPI — no credit card needed. Activated within 1-2 hours.</p>
+          </div>
+
+          {/* Value props */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { icon: Zap, label: "Instant Access", desc: "After admin verification" },
+              { icon: Shield, label: "100% Secure", desc: "UPI verified payments" },
+              { icon: Rocket, label: "Career Growth", desc: "Land jobs faster" },
+            ].map(v => (
+              <div key={v.label} className="p-3 rounded-2xl bg-card border border-border text-center">
+                <v.icon className="w-5 h-5 text-violet-600 mx-auto mb-1" />
+                <div className="text-xs font-semibold">{v.label}</div>
+                <div className="text-[10px] text-muted-foreground">{v.desc}</div>
+              </div>
+            ))}
           </div>
 
           {/* Plans */}
@@ -99,77 +159,142 @@ export default function Premium() {
               <button
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
-                className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                  selectedPlan === plan.id ? "border-indigo-500 bg-indigo-50" : "border-border bg-card hover:border-indigo-200"
+                className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${
+                  selectedPlan === plan.id
+                    ? "border-violet-500 bg-gradient-to-b from-violet-50 to-white shadow-lg shadow-violet-100"
+                    : "border-border bg-card hover:border-violet-300 hover:shadow-md"
                 }`}
               >
-                <div className="font-bold text-lg">₹{plan.price}</div>
-                <div className="text-xs text-muted-foreground mb-3">{plan.desc}</div>
-                <ul className="space-y-1">
-                  {plan.features.slice(0, 3).map(f => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                      {f}
+                {plan.badge && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-[9px] font-bold px-2 py-1 rounded-bl-xl">
+                    {plan.badge.split("—")[0]}
+                  </div>
+                )}
+                {selectedPlan === plan.id && (
+                  <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-violet-600 flex items-center justify-center">
+                    <CheckCircle2 className="w-3 h-3 text-white" />
+                  </div>
+                )}
+                <div className="font-bold text-2xl mt-3">₹{plan.price}</div>
+                <div className="text-xs text-muted-foreground line-through mb-0.5">₹{plan.originalPrice}</div>
+                <div className="text-xs text-muted-foreground mb-3">{plan.period}</div>
+                <ul className="space-y-1.5">
+                  {plan.features.slice(0, 4).map(f => (
+                    <li key={f} className="flex items-start gap-1.5 text-xs">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="leading-tight">{f}</span>
                     </li>
                   ))}
-                  {plan.features.length > 3 && (
-                    <li className="text-xs text-muted-foreground">+{plan.features.length - 3} more...</li>
+                  {plan.features.length > 4 && (
+                    <li className="text-xs text-violet-600 font-medium">+{plan.features.length - 4} more...</li>
                   )}
                 </ul>
               </button>
             ))}
           </div>
 
-          {selectedPlan && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-              {/* QR Code */}
-              <div className="p-5 rounded-2xl bg-card border border-border text-center">
-                <h3 className="font-semibold mb-3">Scan QR to Pay ₹{selectedAmount}</h3>
-                {qrData?.imageUrl ? (
-                  <img src={qrData.imageUrl} alt="UPI QR Code" className="w-48 h-48 object-contain mx-auto rounded-xl border" />
-                ) : (
-                  <div className="w-48 h-48 mx-auto rounded-xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-indigo-400">
-                    <QrCode className="w-12 h-12 mb-2" />
-                    <p className="text-sm">QR Code</p>
-                  </div>
-                )}
-                <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-                  <span className="font-mono text-indigo-700 font-medium">{UPI_ID}</span>
-                  <button onClick={() => { navigator.clipboard.writeText(UPI_ID); toast({ title: "UPI ID copied!" }); }}>
-                    <Copy className="w-4 h-4 text-muted-foreground hover:text-indigo-600 transition-colors" />
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Pay via any UPI app (GPay, PhonePe, Paytm)</p>
-              </div>
-
-              {/* Form */}
-              <div className="space-y-3">
-                <div>
-                  <Label>Your Full Name</Label>
-                  <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} placeholder="Priya Sharma" className="mt-1" />
-                </div>
-                <div>
-                  <Label>Mobile Number</Label>
-                  <Input value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} placeholder="9999999999" className="mt-1" />
-                </div>
-                <div>
-                  <Label>UPI Transaction ID</Label>
-                  <Input value={form.upiTransactionId} onChange={e => setForm({ ...form, upiTransactionId: e.target.value })} placeholder="e.g. 407812345678" className="mt-1" />
-                  <p className="text-xs text-muted-foreground mt-1">Find this in your UPI app after payment</p>
-                </div>
-              </div>
-
-              <Button
-                onClick={submitPayment}
-                disabled={submitting}
-                className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-0 gap-2"
+          <AnimatePresence>
+            {selectedPlan && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-4"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                Submit Payment for Verification
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">Admin verifies manually within 1-2 hours. No auto-payment capture.</p>
-            </motion.div>
-          )}
+                {/* QR Code */}
+                <div className="p-5 rounded-2xl bg-card border border-border text-center">
+                  <h3 className="font-semibold mb-1">Step 1: Scan & Pay ₹{selectedAmount}</h3>
+                  <p className="text-xs text-muted-foreground mb-4">Use GPay, PhonePe, Paytm or any UPI app</p>
+
+                  {qrData?.imageUrl ? (
+                    <img
+                      src={qrData.imageUrl}
+                      alt="UPI QR Code"
+                      className="w-52 h-52 object-contain mx-auto rounded-2xl border border-border shadow-md"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div className="w-52 h-52 mx-auto rounded-2xl border-2 border-dashed border-violet-200 flex flex-col items-center justify-center text-violet-400 bg-violet-50/50">
+                      <QrCode className="w-14 h-14 mb-2" />
+                      <p className="text-sm font-medium">QR Coming Soon</p>
+                      <p className="text-xs text-muted-foreground mt-1">Use UPI ID below</p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex items-center justify-center gap-2 bg-muted/50 rounded-xl px-4 py-2.5">
+                    <div className="text-left">
+                      <div className="text-[10px] text-muted-foreground">UPI ID</div>
+                      <div className="font-mono font-semibold text-sm text-violet-700">{UPI_ID}</div>
+                    </div>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(UPI_ID); toast({ title: "UPI ID copied! ✓" }); }}
+                      className="ml-2 p-1.5 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <Copy className="w-4 h-4 text-muted-foreground hover:text-violet-600 transition-colors" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Form */}
+                <div className="p-5 rounded-2xl bg-card border border-border space-y-4">
+                  <h3 className="font-semibold">Step 2: Submit Payment Details</h3>
+
+                  <div>
+                    <Label>Full Name <span className="text-rose-500">*</span></Label>
+                    <Input
+                      value={form.fullName}
+                      onChange={e => setForm({ ...form, fullName: e.target.value })}
+                      placeholder="Priya Sharma"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Mobile Number <span className="text-rose-500">*</span></Label>
+                    <div className="relative mt-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
+                      <Input
+                        value={form.mobile}
+                        onChange={e => setForm({ ...form, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                        placeholder="9999999999"
+                        className={`pl-10 ${form.mobile && !validateMobile(form.mobile) ? "border-rose-400" : ""}`}
+                        inputMode="numeric"
+                      />
+                    </div>
+                    {form.mobile && !validateMobile(form.mobile) && (
+                      <p className="text-xs text-rose-500 mt-1">Enter a valid 10-digit mobile number</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label>UPI Transaction ID <span className="text-rose-500">*</span></Label>
+                    <Input
+                      value={form.upiTransactionId}
+                      onChange={e => setForm({ ...form, upiTransactionId: e.target.value })}
+                      placeholder="e.g. 407812345678"
+                      className="mt-1 font-mono"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">📱 Find this in your UPI app → Transaction History</p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={submitPayment}
+                  disabled={submitting}
+                  className="w-full bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] text-white border-0 shadow-lg shadow-violet-200/50 gap-2 h-12 text-base"
+                >
+                  {submitting ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</>
+                  ) : (
+                    <><Crown className="w-5 h-5" /> Submit Payment — ₹{selectedAmount}</>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  🔒 Admin verifies manually within 1-2 hours. Your data is secure.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
       <BottomNav />

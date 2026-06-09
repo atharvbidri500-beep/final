@@ -26,40 +26,52 @@ function formatUser(user: typeof usersTable.$inferSelect) {
   };
 }
 
-router.post("/users/register", async (req, res): Promise<void> => {
+async function handleRegister(req: any, res: any): Promise<void> {
   const { name, email, password, mobile, city } = req.body;
   if (!name || !email || !password) {
     res.status(400).json({ error: "Name, email, and password are required" });
     return;
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: "Invalid email address" });
+    return;
+  }
+  if (password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+  if (mobile && !/^[6-9]\d{9}$/.test(mobile.replace(/\s/g, ""))) {
+    res.status(400).json({ error: "Invalid Indian mobile number" });
+    return;
+  }
 
-  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
   if (existing.length > 0) {
     res.status(400).json({ error: "Email already registered" });
     return;
   }
 
   const [user] = await db.insert(usersTable).values({
-    name,
-    email,
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
     passwordHash: hashPassword(password),
-    mobile: mobile ?? null,
+    mobile: mobile?.replace(/\s/g, "") ?? null,
     city: city ?? null,
     isPremium: false,
   }).returning();
 
   const token = jwt.sign({ id: user.id, email: user.email });
   res.status(201).json({ user: formatUser(user), token });
-});
+}
 
-router.post("/users/login", async (req, res): Promise<void> => {
+async function handleLogin(req: any, res: any): Promise<void> {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(401).json({ error: "Email and password are required" });
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.trim().toLowerCase()));
   if (!user || user.passwordHash !== hashPassword(password)) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
@@ -67,10 +79,10 @@ router.post("/users/login", async (req, res): Promise<void> => {
 
   const token = jwt.sign({ id: user.id, email: user.email });
   res.json({ user: formatUser(user), token });
-});
+}
 
-router.get("/users/me", async (req, res): Promise<void> => {
-  const userId = (req as any).userId as number | undefined;
+async function handleMe(req: any, res: any): Promise<void> {
+  const userId = req.userId as number | undefined;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -92,7 +104,17 @@ router.get("/users/me", async (req, res): Promise<void> => {
     coverLetterCount: Number(clCount?.count ?? 0),
     interviewCount: Number(ivCount?.count ?? 0),
   });
-});
+}
+
+// Primary routes
+router.post("/users/register", handleRegister);
+router.post("/users/login", handleLogin);
+router.get("/users/me", handleMe);
+
+// Auth aliases (for backward compatibility & frontend flexibility)
+router.post("/auth/register", handleRegister);
+router.post("/auth/login", handleLogin);
+router.get("/auth/me", handleMe);
 
 router.get("/users/me/dashboard", async (req, res): Promise<void> => {
   const userId = (req as any).userId as number | undefined;
@@ -114,7 +136,7 @@ router.get("/users/me/dashboard", async (req, res): Promise<void> => {
   const recentResumes = await db.select().from(resumesTable).where(eq(resumesTable.userId, userId)).orderBy(resumesTable.createdAt).limit(3);
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const weeklyActivity = days.map((day, i) => ({ day, count: Math.floor(Math.random() * 5) }));
+  const weeklyActivity = days.map((day) => ({ day, count: Math.floor(Math.random() * 5) }));
 
   res.json({
     resumeCount: rc,

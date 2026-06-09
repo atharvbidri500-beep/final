@@ -21,16 +21,15 @@ export function BottomNav() {
           return (
             <Link key={item.href} href={item.href}>
               <motion.div
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.88 }}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
-                  active ? "text-indigo-600" : "text-muted-foreground"
+                  active ? "text-[#5B5CF6]" : "text-muted-foreground"
                 }`}
-                data-testid={`nav-${item.label.toLowerCase()}`}
               >
-                <div className={`p-1.5 rounded-xl transition-all ${active ? "bg-indigo-100" : ""}`}>
+                <div className={`p-1.5 rounded-xl transition-all ${active ? "bg-violet-100" : ""}`}>
                   <item.icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                 </div>
-                <span className={`text-[10px] font-medium ${active ? "text-indigo-600" : "text-muted-foreground"}`}>
+                <span className={`text-[10px] font-medium ${active ? "text-[#5B5CF6]" : "text-muted-foreground"}`}>
                   {item.label}
                 </span>
               </motion.div>

@@ -33,6 +33,7 @@ const navLinks = [
   { href: "/cover-letter", label: "Cover Letter" },
   { href: "/english-tool", label: "English" },
   { href: "/resume-score", label: "Score" },
+  { href: "/career-roadmap", label: "Roadmap" },
 ];
 
 export function Navbar() {

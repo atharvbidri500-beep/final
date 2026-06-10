@@ -1,13 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { Home, FileText, Mic, LayoutDashboard, Crown } from "lucide-react";
+import { Home, FileText, Mic, LayoutDashboard, Crown, Map } from "lucide-react";
 import { motion } from "framer-motion";
 
 const items = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/resume-builder", icon: FileText, label: "Resume" },
   { href: "/interview", icon: Mic, label: "Interview" },
+  { href: "/career-roadmap", icon: Map, label: "Roadmap" },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/premium", icon: Crown, label: "Pro" },
 ];
 
 export function BottomNav() {

@@ -18,6 +18,7 @@ import EnglishTool from "@/pages/english-tool";
 import Premium from "@/pages/premium";
 import Support from "@/pages/support";
 import Admin from "@/pages/admin";
+import CareerRoadmap from "@/pages/career-roadmap";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/premium" component={Premium} />
       <Route path="/support" component={Support} />
       <Route path="/admin" component={Admin} />
+      <Route path="/career-roadmap" component={CareerRoadmap} />
       <Route component={NotFound} />
     </Switch>
   );

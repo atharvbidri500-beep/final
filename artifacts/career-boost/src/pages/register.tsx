@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { setToken } from "@/lib/auth";
+import { setToken, getToken } from "@/lib/auth";
 
 function HirePilotLogo() {
   return (
@@ -45,6 +45,12 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const existingToken = getToken();
+  if (existingToken) {
+    navigate("/dashboard");
+    return null;
+  }
 
   function getFieldError(field: string) {
     if (field === "email" && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Invalid email";

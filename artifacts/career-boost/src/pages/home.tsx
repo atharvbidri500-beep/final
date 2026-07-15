@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { FileText, Mic, Target, Star, CheckCircle2, TrendingUp, ArrowRight, Sparkles, Crown, Rocket, Globe, ChevronDown } from "lucide-react";
+import { FileText, Mic, Target, Star, CheckCircle2, TrendingUp, ArrowRight, Sparkles, Crown, Rocket, Globe, ChevronDown, LayoutDashboard } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
+import { getToken } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
 function HirePilotLogo({ size = 40 }: { size?: number }) {
@@ -104,6 +105,7 @@ const faqs = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const token = getToken();
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,18 +170,37 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-3 justify-center"
           >
-            <Link href="/register">
-              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] text-white border-0 shadow-lg shadow-violet-200 gap-2 text-base px-8">
-                Start for Free
-                <Rocket className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/resume-builder">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base px-8">
-                <FileText className="w-4 h-4" />
-                Build Resume Now
-              </Button>
-            </Link>
+            {token ? (
+              <>
+                <Link href="/dashboard">
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] text-white border-0 shadow-lg shadow-violet-200 gap-2 text-base px-8">
+                    <LayoutDashboard className="w-4 h-4" />
+                    Go to Dashboard
+                  </Button>
+                </Link>
+                <Link href="/resume-builder">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base px-8">
+                    <FileText className="w-4 h-4" />
+                    Build Resume
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] text-white border-0 shadow-lg shadow-violet-200 gap-2 text-base px-8">
+                    Start for Free
+                    <Rocket className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link href="/resume-builder">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base px-8">
+                    <FileText className="w-4 h-4" />
+                    Build Resume Now
+                  </Button>
+                </Link>
+              </>
+            )}
           </motion.div>
         </div>
 

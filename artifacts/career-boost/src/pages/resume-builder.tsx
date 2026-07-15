@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Loader2, Sparkles, ChevronRight, Check, Wand2, Printer, Camera, X, Filter } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { getToken } from "@/lib/auth";
 
 /* ─── COLOR THEMES ──────────────────────────────────────────────────────────── */
@@ -598,8 +599,13 @@ const STEPS = ["Job Role", "Basic Info", "Education", "Skills & Work", "Preview"
 /* ─── MAIN PAGE ──────────────────────────────────────────────────────────── */
 export default function ResumeBuilder() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const token = getToken();
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!token) navigate("/login");
+  }, [token]);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<TemplateConfig>(TEMPLATES[20]!);

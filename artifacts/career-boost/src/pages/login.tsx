@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { setToken } from "@/lib/auth";
+import { setToken, getToken } from "@/lib/auth";
 
 function HirePilotLogo() {
   return (
@@ -36,6 +36,12 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const existingToken = getToken();
+  if (existingToken) {
+    navigate("/dashboard");
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

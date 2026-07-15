@@ -6,6 +6,8 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { getToken } from "@/lib/auth";
+import { AuthGuard } from "@/components/AuthGuard";
 
 interface ImproveResult {
   improvedText: string;
@@ -15,6 +17,7 @@ interface ImproveResult {
 
 export default function EnglishTool() {
   const { toast } = useToast();
+  const token = getToken();
   const [text, setText] = useState("");
   const [result, setResult] = useState<ImproveResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,7 +28,7 @@ export default function EnglishTool() {
     try {
       const res = await fetch("/api/interview/improve-english", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ text }),
       });
       const data = await res.json();
@@ -53,6 +56,7 @@ export default function EnglishTool() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+        <AuthGuard token={token} featureName="the English Improvement Tool">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -60,7 +64,7 @@ export default function EnglishTool() {
             </div>
             <div>
               <h1 className="text-xl font-bold">English Improvement Tool</h1>
-              <p className="text-sm text-muted-foreground">Polish your professional English instantly</p>
+              <p className="text-sm text-muted-foreground">Polish your professional English — powered by AI</p>
             </div>
           </div>
 
@@ -148,6 +152,7 @@ export default function EnglishTool() {
             </motion.div>
           )}
         </motion.div>
+        </AuthGuard>
       </div>
       <BottomNav />
     </div>

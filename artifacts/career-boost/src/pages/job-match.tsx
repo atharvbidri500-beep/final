@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getToken } from "@/lib/auth";
+import { AuthGuard } from "@/components/AuthGuard";
 
 interface MatchResult {
   matchPercentage: number;
@@ -17,6 +19,7 @@ interface MatchResult {
 
 export default function JobMatch() {
   const { toast } = useToast();
+  const token = getToken();
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [result, setResult] = useState<MatchResult | null>(null);
@@ -31,7 +34,7 @@ export default function JobMatch() {
     try {
       const res = await fetch("/api/resumes/job-match", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ resumeText, jobDescription }),
       });
       const data = await res.json();
@@ -54,6 +57,7 @@ export default function JobMatch() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+        <AuthGuard token={token} featureName="the Job Match Analyzer">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
@@ -61,7 +65,7 @@ export default function JobMatch() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Job Match Analyzer</h1>
-              <p className="text-sm text-muted-foreground">Check how well your resume matches a job</p>
+              <p className="text-sm text-muted-foreground">AI checks how well your resume fits a job</p>
             </div>
           </div>
 
@@ -149,6 +153,7 @@ export default function JobMatch() {
             </motion.div>
           )}
         </motion.div>
+        </AuthGuard>
       </div>
       <BottomNav />
     </div>

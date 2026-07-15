@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getToken } from "@/lib/auth";
+import { AuthGuard } from "@/components/AuthGuard";
 
 interface ScoreResult {
   overallScore: number;
@@ -44,6 +46,7 @@ function ScoreRing({ score, label, color }: { score: number; label: string; colo
 
 export default function ResumeScore() {
   const { toast } = useToast();
+  const token = getToken();
   const [resumeText, setResumeText] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [result, setResult] = useState<ScoreResult | null>(null);
@@ -55,7 +58,7 @@ export default function ResumeScore() {
     try {
       const res = await fetch("/api/resumes/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ resumeText, jobRole }),
       });
       const data = await res.json();
@@ -72,6 +75,7 @@ export default function ResumeScore() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+        <AuthGuard token={token} featureName="the Resume Score Checker">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
@@ -79,7 +83,7 @@ export default function ResumeScore() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Resume Score Checker</h1>
-              <p className="text-sm text-muted-foreground">Get ATS & skill analysis in seconds</p>
+              <p className="text-sm text-muted-foreground">AI-powered ATS & skill analysis</p>
             </div>
           </div>
 
@@ -162,6 +166,7 @@ export default function ResumeScore() {
             </motion.div>
           )}
         </motion.div>
+        </AuthGuard>
       </div>
       <BottomNav />
     </div>

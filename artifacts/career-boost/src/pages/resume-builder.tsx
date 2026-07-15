@@ -105,100 +105,187 @@ function ResumePreview({ form, photo, tmpl }: { form: FormData; photo: string | 
   const skills = form.skills.split(/[,，\n]/).map(s => s.trim()).filter(Boolean);
   const certs = form.certifications ? form.certifications.split(/[,，\n]/).map(s => s.trim()).filter(Boolean) : [];
   const langs = form.languages ? form.languages.split(/[,，\n]/).map(s => s.trim()).filter(Boolean) : [];
-  const name = form.fullName || "Your Name";
+  const nameParts = (form.fullName || "Your Name").split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ");
   const role = form.jobRole || "Your Job Role";
 
-  const sectionH = (title: string, color = t.primary) => (
-    <div style={{ marginBottom: 8, marginTop: 4 }}>
-      <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color, borderBottom: `2px solid ${color}`, paddingBottom: 3, marginBottom: 5 }}>{title}</div>
-    </div>
+  /* Sidebar section header — white text with accent underline */
+  const sidebarSec = (title: string) => (
+    <div style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase" as const, letterSpacing: 2, color: "#fff", borderBottom: `1px solid rgba(255,255,255,0.35)`, paddingBottom: 4, marginBottom: 9, marginTop: 2 }}>{title}</div>
   );
 
-  const photoCircle = (size: number) => photo ? (
-    <img src={photo} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `3px solid ${t.accent}`, display: "block" }} />
+  /* Main section header — dark text with bottom border */
+  const mainSec = (title: string) => (
+    <div style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase" as const, letterSpacing: 2.5, color: t.dark, borderBottom: `2px solid ${t.dark}`, paddingBottom: 3, marginBottom: 9, marginTop: 2 }}>{title}</div>
+  );
+
+  const photoEl = (size: number) => photo ? (
+    <img src={photo} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `4px solid rgba(255,255,255,0.9)`, display: "block" }} />
   ) : (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: `${t.accent}33`, border: `3px solid ${t.accent}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size / 3, color: t.accent }}>
-      👤
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "4px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width={size * 0.45} height={size * 0.45} viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
     </div>
   );
 
-  /* ── SIDEBAR-PHOTO layout (like image 1) ── */
+  /* ── SIDEBAR-PHOTO layout — EXACTLY like reference image ── */
   if (tmpl.layout === "sidebar-photo") {
+    const workLines = form.workExperience ? form.workExperience.split("\n").filter(Boolean) : [];
+    const projectLines = form.projects ? form.projects.split("\n").filter(Boolean) : [];
+
     return (
-      <div style={{ fontFamily: "Arial, sans-serif", fontSize: 10, display: "flex", minHeight: 780, width: "100%", background: "#fff" }}>
-        {/* LEFT SIDEBAR */}
-        <div style={{ width: "32%", background: t.primary, color: t.light, padding: "28px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Photo */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>{photoCircle(90)}</div>
-          {/* Contact */}
-          <div>
-            <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: `1px solid ${t.accent}`, paddingBottom: 3, marginBottom: 8, color: t.accent }}>Contact</div>
-            {form.mobile && <div style={{ fontSize: 9, marginBottom: 5, display: "flex", gap: 5 }}>📱 +91 {form.mobile}</div>}
-            {form.email && <div style={{ fontSize: 9, marginBottom: 5, wordBreak: "break-all" }}>✉ {form.email}</div>}
-            {form.city && <div style={{ fontSize: 9, marginBottom: 5 }}>📍 {form.city}</div>}
-            {form.linkedin && <div style={{ fontSize: 9, marginBottom: 5, wordBreak: "break-all" }}>🔗 {form.linkedin}</div>}
+      <div style={{ fontFamily: "'Arial', sans-serif", display: "flex", width: "100%", minHeight: 820, background: "#fff" }}>
+
+        {/* ── LEFT SIDEBAR ── */}
+        <div style={{ width: "31%", background: t.primary, color: "#fff", padding: "28px 18px 28px 18px", display: "flex", flexDirection: "column", gap: 0 }}>
+
+          {/* Photo — centered, large circle with white border */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
+            <div style={{ borderRadius: "50%", padding: 3, background: "rgba(255,255,255,0.2)" }}>
+              {photoEl(96)}
+            </div>
           </div>
-          {/* Education */}
+
+          {/* CONTACT */}
+          <div style={{ marginBottom: 18 }}>
+            {sidebarSec("Contact")}
+            {form.mobile && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 7, fontSize: 9 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" style={{ flexShrink: 0, marginTop: 1 }}><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+                <span style={{ opacity: 0.9, lineHeight: 1.4 }}>+91 {form.mobile}</span>
+              </div>
+            )}
+            {form.email && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 7, fontSize: 9 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" style={{ flexShrink: 0, marginTop: 1 }}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                <span style={{ opacity: 0.9, wordBreak: "break-all", lineHeight: 1.4 }}>{form.email}</span>
+              </div>
+            )}
+            {form.city && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 7, fontSize: 9 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" style={{ flexShrink: 0, marginTop: 1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span style={{ opacity: 0.9, lineHeight: 1.4 }}>{form.city}</span>
+              </div>
+            )}
+            {form.linkedin && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 7, fontSize: 9 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" style={{ flexShrink: 0, marginTop: 1 }}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span style={{ opacity: 0.9, wordBreak: "break-all", lineHeight: 1.4 }}>{form.linkedin}</span>
+              </div>
+            )}
+          </div>
+
+          {/* EDUCATION */}
           {(form.college || form.education) && (
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: `1px solid ${t.accent}`, paddingBottom: 3, marginBottom: 8, color: t.accent }}>Education</div>
-              {form.college && <div style={{ fontWeight: 700, fontSize: 9, marginBottom: 3 }}>{form.college}</div>}
-              {form.education && <div style={{ fontSize: 8.5, opacity: 0.85, whiteSpace: "pre-line" }}>{form.education}</div>}
+            <div style={{ marginBottom: 18 }}>
+              {sidebarSec("Education")}
+              {form.education && form.education.split("\n").filter(Boolean).map((line, i) => (
+                <div key={i} style={{ fontSize: 8.5, opacity: 0.88, marginBottom: 5, lineHeight: 1.5 }}>{line}</div>
+              ))}
+              {form.college && <div style={{ fontSize: 9, fontWeight: 700, opacity: 0.95, marginBottom: 2, lineHeight: 1.4 }}>{form.college.toUpperCase()}</div>}
             </div>
           )}
-          {/* Skills */}
+
+          {/* SKILLS */}
           {skills.length > 0 && (
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: `1px solid ${t.accent}`, paddingBottom: 3, marginBottom: 8, color: t.accent }}>Skills</div>
-              {skills.map((s, i) => <div key={i} style={{ fontSize: 9, marginBottom: 4 }}>▸ {s}</div>)}
+            <div style={{ marginBottom: 18 }}>
+              {sidebarSec("Skills")}
+              {skills.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5, fontSize: 9 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.8)", flexShrink: 0 }} />
+                  <span style={{ opacity: 0.9 }}>{s}</span>
+                </div>
+              ))}
             </div>
           )}
-          {/* Languages */}
+
+          {/* LANGUAGES */}
           {langs.length > 0 && (
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, borderBottom: `1px solid ${t.accent}`, paddingBottom: 3, marginBottom: 8, color: t.accent }}>Languages</div>
-              {langs.map((l, i) => <div key={i} style={{ fontSize: 9, marginBottom: 4 }}>▸ {l}</div>)}
+            <div style={{ marginBottom: 0 }}>
+              {sidebarSec("Languages")}
+              {langs.map((l, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5, fontSize: 9 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.8)", flexShrink: 0 }} />
+                  <span style={{ opacity: 0.9 }}>{l}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* CERTIFICATIONS in sidebar */}
+          {certs.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              {sidebarSec("Certifications")}
+              {certs.map((c, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 5, fontSize: 8.5 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.8)", flexShrink: 0, marginTop: 3 }} />
+                  <span style={{ opacity: 0.9, lineHeight: 1.4 }}>{c}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
-        {/* RIGHT MAIN */}
-        <div style={{ flex: 1, padding: "28px 22px", background: "#fff" }}>
-          {/* Name & Role */}
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: 24, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: t.dark }}>
-              {name.split(" ")[0]} <span style={{ fontWeight: 300 }}>{name.split(" ").slice(1).join(" ")}</span>
+
+        {/* ── RIGHT MAIN CONTENT ── */}
+        <div style={{ flex: 1, padding: "32px 28px 24px 28px", background: "#fff", display: "flex", flexDirection: "column", gap: 0 }}>
+
+          {/* NAME — large, bold first name + light last name (like "RICHARD SANCHEZ") */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 30, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, color: "#1a1a2e", lineHeight: 1, marginBottom: 6 }}>
+              {firstName}
+              {lastName && <span style={{ fontWeight: 300 }}> {lastName}</span>}
             </div>
-            <div style={{ fontSize: 12, color: t.primary, fontWeight: 600, marginTop: 3, letterSpacing: 1 }}>{role.toUpperCase()}</div>
-            <div style={{ width: 50, height: 3, background: t.accent, marginTop: 8, borderRadius: 2 }} />
+            <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 400, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>{role}</div>
+            <div style={{ width: 48, height: 3, background: t.primary, borderRadius: 2 }} />
           </div>
-          {/* Profile */}
+
+          {/* PROFILE */}
           {form.profile && (
-            <div style={{ marginBottom: 16 }}>
-              {sectionH("Profile")}
-              <div style={{ fontSize: 10, color: "#4b5563", lineHeight: 1.7 }}>{form.profile}</div>
+            <div style={{ marginBottom: 18 }}>
+              {mainSec("Profile")}
+              <div style={{ fontSize: 9.5, color: "#4b5563", lineHeight: 1.75, textAlign: "justify" }}>{form.profile}</div>
             </div>
           )}
-          {/* Work Experience */}
-          {form.workExperience && (
-            <div style={{ marginBottom: 16 }}>
-              {sectionH("Work Experience")}
-              <div style={{ fontSize: 10, color: "#374151", whiteSpace: "pre-line", lineHeight: 1.7 }}>{form.workExperience}</div>
+
+          {/* WORK EXPERIENCE — with left timeline dot */}
+          {workLines.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              {mainSec("Work Experience")}
+              {workLines.map((line, i) => {
+                const isBullet = line.trim().startsWith("•") || line.trim().startsWith("-") || line.trim().startsWith("*");
+                const isHeader = !isBullet && i === 0 || (!isBullet && workLines[i-1]?.trim() === "");
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: isBullet ? 3 : 6 }}>
+                    {!isBullet && (
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: t.primary, flexShrink: 0, marginTop: 4 }} />
+                    )}
+                    {isBullet && <div style={{ width: 7, flexShrink: 0 }} />}
+                    <div style={{ fontSize: isBullet ? 9 : 9.5, color: isBullet ? "#4b5563" : "#111827", fontWeight: isBullet ? 400 : (line.includes(":") ? 700 : 400), lineHeight: 1.6 }}>
+                      {line.replace(/^[•\-*]\s*/, "→ ")}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-          {/* Projects */}
-          {form.projects && (
-            <div style={{ marginBottom: 16 }}>
-              {sectionH("Projects")}
-              <div style={{ fontSize: 10, color: "#374151", whiteSpace: "pre-line", lineHeight: 1.7 }}>{form.projects}</div>
-            </div>
-          )}
-          {/* Certifications */}
-          {certs.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              {sectionH("Certifications")}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {certs.map((c, i) => <span key={i} style={{ fontSize: 9, border: `1px solid ${t.primary}`, color: t.primary, padding: "2px 8px", borderRadius: 10 }}>{c}</span>)}
-              </div>
+
+          {/* PROJECTS */}
+          {projectLines.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              {mainSec("Projects")}
+              {projectLines.map((line, i) => {
+                const isBullet = line.trim().startsWith("•") || line.trim().startsWith("-") || line.trim().startsWith("*");
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: isBullet ? 3 : 6 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: isBullet ? "transparent" : t.primary, flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ fontSize: isBullet ? 9 : 9.5, color: isBullet ? "#4b5563" : "#111827", fontWeight: isBullet ? 400 : 600, lineHeight: 1.6 }}>
+                      {line.replace(/^[•\-*]\s*/, "→ ")}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -608,7 +695,7 @@ export default function ResumeBuilder() {
   }, [token]);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState<TemplateConfig>(TEMPLATES[20]!);
+  const [selected, setSelected] = useState<TemplateConfig>(TEMPLATES[0]!);
   const [autoSelected, setAutoSelected] = useState(false);
   const [filterLayout, setFilterLayout] = useState<Layout | "all">("all");
   const [photo, setPhoto] = useState<string | null>(null);

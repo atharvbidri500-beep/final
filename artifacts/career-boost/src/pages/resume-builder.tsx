@@ -69,7 +69,7 @@ const TEMPLATES: TemplateConfig[] = LAYOUTS.flatMap(l =>
 /* ─── AUTO SELECT ─────────────────────────────────────────────────────────── */
 function autoSelect(jobRole: string, skills: string): TemplateConfig {
   const text = (jobRole + " " + skills).toLowerCase();
-  let best = TEMPLATES[20]!;
+  let best = TEMPLATES[0]!;
   let bestScore = 0;
   for (const t of TEMPLATES) {
     const score = t.keywords.filter(k => text.includes(k)).length;
@@ -108,6 +108,7 @@ function ResumePreview({ form, photo, tmpl }: { form: FormData; photo: string | 
   const nameParts = (form.fullName || "Your Name").split(" ");
   const firstName = nameParts[0] || "";
   const lastName = nameParts.slice(1).join(" ");
+  const name = form.fullName || "Your Name";
   const role = form.jobRole || "Your Job Role";
 
   /* Sidebar section header — white text with accent underline */
@@ -397,7 +398,7 @@ function ResumePreview({ form, photo, tmpl }: { form: FormData; photo: string | 
             {form.profile && <div style={{ fontSize: 9, opacity: 0.85, marginTop: 8, lineHeight: 1.5, maxWidth: 380 }}>{form.profile}</div>}
           </div>
           {/* Photo right */}
-          <div style={{ flexShrink: 0 }}>{photoCircle(80)}</div>
+          <div style={{ flexShrink: 0 }}>{photoEl(80)}</div>
           {/* Contact strip */}
           <div style={{ flexShrink: 0, fontSize: 8.5, display: "flex", flexDirection: "column", gap: 4, opacity: 0.9 }}>
             {form.email && <div>✉ {form.email}</div>}
@@ -544,7 +545,7 @@ function ResumePreview({ form, photo, tmpl }: { form: FormData; photo: string | 
           <div style={{ fontSize: 12, color: t.primary, fontWeight: 700, marginTop: 4, fontFamily: "Arial, sans-serif" }}>{role}</div>
           {form.profile && <div style={{ fontSize: 9.5, color: "#6b7280", marginTop: 8, maxWidth: 420, lineHeight: 1.6 }}>{form.profile}</div>}
         </div>
-        {photoCircle(75)}
+        {photoEl(75)}
       </div>
       {/* Contact bar */}
       <div style={{ background: t.primary, color: "#fff", padding: "7px 24px", display: "flex", gap: 20, fontSize: 9, flexWrap: "wrap" }}>

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const EXP_LEVELS = ["fresher", "1-2 years", "3-5 years"];
 
@@ -18,6 +19,8 @@ export default function CoverLetter() {
   const [form, setForm] = useState({ jobRole: "", companyName: "", experienceLevel: "fresher", additionalInfo: "" });
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeMsg, setUpgradeMsg] = useState<string | undefined>();
 
   const f = (k: keyof typeof form) => ({
     value: form[k],
@@ -39,6 +42,11 @@ export default function CoverLetter() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setUpgradeMsg(data.message);
+        setUpgradeOpen(true);
+        return;
+      }
       if (!res.ok) throw new Error(data.error);
       setResult(data.content);
       toast({ title: "Cover letter generated! ✉️" });

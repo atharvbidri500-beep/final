@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, interviewSessionsTable } from "@workspace/db";
 import { askAI, safeParseJSON } from "../lib/ai.js";
+import { checkLimit } from "../lib/limits.js";
 
 const router = Router();
 
@@ -240,6 +241,10 @@ router.post("/interview/sessions", async (req, res): Promise<void> => {
   if (!userId) { res.status(401).json({ error: "Login required to start an interview session" }); return; }
   const { category } = req.body;
   if (!category) { res.status(400).json({ error: "category is required" }); return; }
+
+  const limit = await checkLimit(userId, "interview");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
+
   const [session] = await db.insert(interviewSessionsTable).values({ userId, category, questionCount: 0 }).returning();
   res.status(201).json({ ...session, createdAt: session.createdAt.toISOString() });
 });

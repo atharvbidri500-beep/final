@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { getToken } from "@/lib/auth";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 /* ─── COLOR THEMES ──────────────────────────────────────────────────────────── */
 interface Theme {

@@ -5,30 +5,47 @@ interface Message {
   content: string;
 }
 
-export async function askAI(messages: Message[], jsonMode = false, timeoutMs = 20000): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const body: Record<string, unknown> = {
-      messages,
-      model: "openai",
-      seed: Math.floor(Math.random() * 9999),
-    };
-    if (jsonMode) body.jsonMode = true;
+export async function askAI(
+  messages: Message[],
+  _jsonMode = false,   // jsonMode param kept for compatibility but NOT sent to Pollinations
+  timeoutMs = 20000,
+  retries = 1,
+): Promise<string> {
+  let lastError: unknown;
 
-    const res = await fetch(POLLINATIONS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const body: Record<string, unknown> = {
+        messages,
+        model: "openai",
+        seed: Math.floor(Math.random() * 99999),
+        private: true,          // prevent caching so every call gets a fresh response
+      };
 
-    if (!res.ok) throw new Error(`Pollinations error ${res.status}`);
-    const text = await res.text();
-    return text.trim();
-  } finally {
-    clearTimeout(timer);
+      const res = await fetch(POLLINATIONS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error(`Pollinations error ${res.status}`);
+      const text = await res.text();
+      if (!text || text.trim().length === 0) throw new Error("Empty response from AI");
+      return text.trim();
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    } finally {
+      clearTimeout(timer);
+    }
   }
+
+  throw lastError;
 }
 
 export function safeParseJSON<T>(raw: string, fallback: T): T {

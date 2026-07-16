@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, resumesTable } from "@workspace/db";
 import { askAI, safeParseJSON } from "../lib/ai.js";
+import { checkLimit } from "../lib/limits.js";
 
 const router = Router();
 
@@ -273,6 +274,9 @@ router.post("/resumes", async (req, res): Promise<void> => {
   if (!userId) { res.status(401).json({ error: "Login required to build a resume" }); return; }
   const { title, template, fullName, mobile, email, city, education, college, skills, projects, workExperience, certifications, languages } = req.body;
   if (!title) { res.status(400).json({ error: "Title is required" }); return; }
+
+  const limit = await checkLimit(userId, "resume");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
 
   const dataObj = { fullName, mobile, email, city, education, college, skills, projects, workExperience, certifications, languages };
   const aiResult = await scoreResumeWithAI(dataObj);

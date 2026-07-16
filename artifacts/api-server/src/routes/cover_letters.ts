@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, coverLettersTable } from "@workspace/db";
 import { askAI } from "../lib/ai.js";
+import { checkLimit } from "../lib/limits.js";
 
 const router = Router();
 
@@ -81,6 +82,10 @@ router.post("/cover-letters", async (req, res): Promise<void> => {
     res.status(400).json({ error: "jobRole, companyName, and experienceLevel are required" });
     return;
   }
+
+  const limit = await checkLimit(userId, "coverLetter");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
+
   const content = await generateWithAI(jobRole, companyName, experienceLevel, additionalInfo);
   const [letter] = await db.insert(coverLettersTable).values({ userId, jobRole, companyName, experienceLevel, content }).returning();
   res.status(201).json({ ...letter, createdAt: letter.createdAt.toISOString() });

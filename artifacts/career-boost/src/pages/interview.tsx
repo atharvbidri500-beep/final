@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORIES = [
   { id: "hr", label: "HR Interview", emoji: "👔", desc: "Tell me about yourself, strengths, weaknesses" },
@@ -49,6 +50,8 @@ export default function Interview() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [sessionScore, setSessionScore] = useState({ comm: 0, conf: 0, count: 0 });
   const maxQuestions = 5;
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeMsg, setUpgradeMsg] = useState<string | undefined>();
 
   async function fetchNextQuestion(cat: string, count: number, prevQs: string[]) {
     setLoadingQuestion(true);
@@ -93,6 +96,12 @@ export default function Interview() {
           body: JSON.stringify({ category: cat }),
         });
         const d = await res.json();
+        if (res.status === 402) {
+          setUpgradeMsg(d.message);
+          setUpgradeOpen(true);
+          setCategory(null);
+          return;
+        }
         if (res.ok) { setSessionId(d.id); sid = d.id; }
       } catch {}
     }

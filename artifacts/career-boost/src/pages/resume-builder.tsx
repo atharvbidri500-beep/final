@@ -613,62 +613,123 @@ function ResumePreview({ form, photo, tmpl }: { form: FormData; photo: string | 
 /* ─── TEMPLATE MINI CARD ─────────────────────────────────────────────────── */
 function TemplateMiniCard({ t, selected, onSelect }: { t: TemplateConfig; selected: boolean; onSelect: () => void }) {
   const th = t.theme;
+  const S = { position: "absolute" as const };
   return (
     <button onClick={onSelect} className={`relative rounded-xl border-2 overflow-hidden text-left transition-all hover:scale-105 active:scale-95 ${selected ? "border-[#5B5CF6] shadow-lg shadow-violet-200" : "border-border"}`}>
-      {/* Layout preview */}
-      <div style={{ height: 56, background: "#fff", position: "relative", overflow: "hidden" }}>
+      {/* Layout preview — detailed A4-like thumbnail */}
+      <div style={{ height: 80, background: "#fff", position: "relative", overflow: "hidden" }}>
+
+        {/* ── EXECUTIVE (sidebar-photo) ── */}
         {t.layout === "sidebar-photo" && (
           <>
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "32%", background: th.primary }} />
-            <div style={{ position: "absolute", left: "6%", top: 8, width: 18, height: 18, borderRadius: "50%", background: th.accent, border: "2px solid #fff" }} />
-            <div style={{ position: "absolute", left: "36%", top: 10, right: 4, height: 5, background: th.dark, borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: "36%", top: 18, width: "40%", height: 3, background: th.accent, borderRadius: 2 }} />
-            {[26,32,38,44].map((y, i) => <div key={i} style={{ position: "absolute", left: "36%", top: y, right: 4, height: 2, background: "#e5e7eb", borderRadius: 1 }} />)}
+            {/* Sidebar */}
+            <div style={{ ...S, left: 0, top: 0, bottom: 0, width: "33%", background: th.primary }} />
+            {/* Photo circle */}
+            <div style={{ ...S, left: "7%", top: 5, width: 20, height: 20, borderRadius: "50%", background: `${th.accent}88`, border: "2.5px solid rgba(255,255,255,0.9)" }} />
+            {/* Sidebar section lines */}
+            <div style={{ ...S, left: "5%", top: 30, width: "22%", height: 1.5, background: "rgba(255,255,255,0.4)" }} />
+            {[35,40,45,51,57].map((y, i) => <div key={i} style={{ ...S, left: "5%", top: y, width: `${18 - i * 2}%`, height: 1.5, background: "rgba(255,255,255,0.25)" }} />)}
+            {/* Name block right */}
+            <div style={{ ...S, left: "37%", top: 8, right: 3, height: 6, background: th.dark, borderRadius: 2 }} />
+            <div style={{ ...S, left: "37%", top: 17, width: "32%", height: 3.5, background: "#9ca3af", borderRadius: 1.5 }} />
+            <div style={{ ...S, left: "37%", top: 23, width: 20, height: 2, background: th.primary, borderRadius: 1 }} />
+            {/* Right section headers + lines */}
+            <div style={{ ...S, left: "37%", top: 30, width: "28%", height: 2, background: th.dark, borderRadius: 1 }} />
+            <div style={{ ...S, left: "37%", top: 34, right: 3, height: 1, background: "#e5e7eb" }} />
+            {[38,42,46].map((y, i) => <div key={i} style={{ ...S, left: "40%", top: y, width: `${35 - i * 5}%`, height: 1.5, background: "#d1d5db", borderRadius: 1 }} />)}
+            <div style={{ ...S, left: "37%", top: 52, width: "25%", height: 2, background: th.dark, borderRadius: 1 }} />
+            <div style={{ ...S, left: "37%", top: 56, right: 3, height: 1, background: "#e5e7eb" }} />
+            {[60,65,70].map((y, i) => <div key={i} style={{ ...S, left: "40%", top: y, width: `${32 - i * 4}%`, height: 1.5, background: "#d1d5db", borderRadius: 1 }} />)}
           </>
         )}
+
+        {/* ── CREATIVE (panel-diamond) ── */}
         {t.layout === "panel-diamond" && (
           <>
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "36%", background: "#f8f9fa", borderRight: `2px solid ${th.primary}` }} />
-            <div style={{ position: "absolute", left: "9%", top: 6, width: 18, height: 18, background: `${th.primary}22`, border: `2px solid ${th.primary}`, transform: "rotate(45deg)" }} />
-            <div style={{ position: "absolute", left: "38%", top: 8 }}>
-              <div style={{ width: 60, height: 7, background: th.primary, borderRadius: 1, marginBottom: 2 }} />
-              {[0,1,2].map(i => <div key={i} style={{ width: 60 - i * 15, height: 4, background: "#e5e7eb", borderRadius: 1, marginBottom: 2 }}>
-                <div style={{ width: `${70 - i * 10}%`, height: 4, background: th.primary, borderRadius: 1 }} />
-              </div>)}
+            <div style={{ ...S, left: 0, top: 0, bottom: 0, width: "34%", background: "#f1f5f9", borderRight: `2.5px solid ${th.primary}` }} />
+            {/* Diamond photo */}
+            <div style={{ ...S, left: "6%", top: 5, width: 18, height: 18, background: `${th.primary}22`, border: `2px solid ${th.primary}`, transform: "rotate(45deg)" }} />
+            {/* Left panel lines */}
+            <div style={{ ...S, left: "5%", top: 29, width: "22%", height: 2, background: th.primary, borderRadius: 1 }} />
+            {[34,38,43,48,53,58,63,68].map((y, i) => <div key={i} style={{ ...S, left: "5%", top: y, width: `${20 - (i % 3) * 4}%`, height: 1.5, background: "#94a3b8", borderRadius: 1 }} />)}
+            {/* Right content */}
+            <div style={{ ...S, left: "38%", top: 6, right: 3, height: 5, background: th.primary, borderRadius: 1 }} />
+            <div style={{ ...S, left: "38%", top: 14, width: "30%", height: 3, background: "#cbd5e1", borderRadius: 1 }} />
+            {/* Skill bars */}
+            {[22,30,38,46].map((y, i) => (
+              <div key={i} style={{ ...S, left: "38%", top: y, right: 3, height: 4, background: "#f1f5f9", borderRadius: 2 }}>
+                <div style={{ position: "absolute", left: 0, top: 0, width: `${75 - i * 10}%`, height: 4, background: th.primary, borderRadius: 2 }} />
+              </div>
+            ))}
+            {[55,62,69].map((y, i) => <div key={i} style={{ ...S, left: "38%", top: y, width: `${40 - i * 8}%`, height: 1.5, background: "#cbd5e1", borderRadius: 1 }} />)}
+          </>
+        )}
+
+        {/* ── PROFESSIONAL (header-photo) ── */}
+        {t.layout === "header-photo" && (
+          <>
+            <div style={{ ...S, top: 0, left: 0, right: 0, height: 26, background: th.primary }} />
+            {/* Photo circle in header */}
+            <div style={{ ...S, right: 5, top: 5, width: 16, height: 16, borderRadius: "50%", background: `${th.accent}99`, border: "2px solid rgba(255,255,255,0.9)" }} />
+            {/* Name + role in header */}
+            <div style={{ ...S, left: 5, top: 7, width: 55, height: 5, background: "rgba(255,255,255,0.9)", borderRadius: 1.5 }} />
+            <div style={{ ...S, left: 5, top: 15, width: 38, height: 3, background: th.accent, borderRadius: 1, opacity: 0.85 }} />
+            {/* Two-column body */}
+            <div style={{ ...S, top: 30, left: 0, width: "50%", bottom: 0, borderRight: "1px solid #f3f4f6", padding: "4px 4px" }}>
+              <div style={{ ...S, left: 4, top: 32, width: 30, height: 2, background: th.primary, borderRadius: 1 }} />
+              {[36,40,44,48,52,56,60,65,70].map((y, i) => <div key={i} style={{ ...S, left: 4, top: y, width: `${32 - (i % 4) * 4}%`, height: 1.5, background: "#e5e7eb", borderRadius: 1 }} />)}
+            </div>
+            <div style={{ ...S, top: 30, right: 0, width: "50%", bottom: 0 }}>
+              <div style={{ ...S, right: 4, left: "52%", top: 32, height: 2, background: th.primary, borderRadius: 1 }} />
+              {[36,40,44,48,52,57,62].map((y, i) => <div key={i} style={{ ...S, left: "53%", top: y, width: `${28 - (i % 3) * 5}%`, height: 1.5, background: "#e5e7eb", borderRadius: 1 }} />)}
             </div>
           </>
         )}
-        {t.layout === "header-photo" && (
-          <>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 22, background: th.primary }} />
-            <div style={{ position: "absolute", right: 6, top: 3, width: 16, height: 16, borderRadius: "50%", background: th.accent, border: "1.5px solid #fff" }} />
-            <div style={{ position: "absolute", left: 4, top: 6, width: 50, height: 4, background: "#fff", borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: 4, top: 13, width: 35, height: 3, background: th.accent, borderRadius: 2 }} />
-            {[26,32,38,44,50].map((y, i) => <div key={i} style={{ position: "absolute", left: 4, top: y, width: i < 3 ? 80 : 40, height: 2, background: "#e5e7eb", borderRadius: 1 }} />)}
-          </>
-        )}
+
+        {/* ── IMPACT (bold-graphic) ── */}
         {t.layout === "bold-graphic" && (
           <>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 24, background: th.primary }} />
-            {[0,1,2].map(i => <div key={i} style={{ position: "absolute", right: 12 + i * 8, top: -3, width: 5, height: 30, background: th.accent, opacity: 0.3 + i * 0.15, transform: "rotate(15deg)" }} />)}
-            <div style={{ position: "absolute", left: 4, top: 6, width: 55, height: 5, background: "#fff", borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: 4, top: 14, width: 35, height: 3, background: th.accent, borderRadius: 2 }} />
-            <div style={{ position: "absolute", top: 24, left: 0, right: 0, height: 8, background: `${th.primary}22` }} />
+            <div style={{ ...S, top: 0, left: 0, right: 0, height: 28, background: th.primary }} />
+            {/* Diagonal graphic accents */}
+            {[0,1,2,3].map(i => <div key={i} style={{ ...S, right: 8 + i * 9, top: -4, width: 4, height: 36, background: th.accent, opacity: 0.15 + i * 0.1, transform: "rotate(12deg)" }} />)}
+            {/* Name */}
+            <div style={{ ...S, left: 5, top: 7, width: 60, height: 6, background: "rgba(255,255,255,0.95)", borderRadius: 2 }} />
+            <div style={{ ...S, left: 5, top: 16, width: 40, height: 3.5, background: th.accent, borderRadius: 1.5, opacity: 0.9 }} />
+            {/* Accent divider band */}
+            <div style={{ ...S, top: 28, left: 0, right: 0, height: 6, background: `${th.accent}22` }} />
+            {/* Two column content */}
+            {[37,42,47,52,57,62,67,72].map((y, i) => (
+              <div key={i} style={{ ...S, left: i % 2 === 0 ? 4 : "52%", top: y, width: i % 2 === 0 ? "44%" : "44%", height: 1.5, background: "#e5e7eb", borderRadius: 1 }} />
+            ))}
+            {/* Section dot accents */}
+            {[37,52].map((y, i) => <div key={i} style={{ ...S, left: 4, top: y, width: 5, height: 5, borderRadius: "50%", background: th.accent }} />)}
           </>
         )}
+
+        {/* ── ELEGANT (split-accent) ── */}
         {t.layout === "split-accent" && (
           <>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: th.primary }} />
-            <div style={{ position: "absolute", left: 4, top: 10, width: 50, height: 5, background: th.dark, borderRadius: 2 }} />
-            <div style={{ position: "absolute", left: 4, top: 18, width: 35, height: 3, background: th.primary, borderRadius: 2 }} />
-            <div style={{ position: "absolute", right: 6, top: 8, width: 16, height: 16, borderRadius: "50%", background: `${th.primary}22`, border: `2px solid ${th.primary}` }} />
-            <div style={{ position: "absolute", top: 28, left: 0, right: 0, height: 5, background: th.primary }} />
+            {/* Top accent bar */}
+            <div style={{ ...S, top: 0, left: 0, right: 0, height: 5, background: th.primary }} />
+            {/* Photo top right */}
+            <div style={{ ...S, right: 5, top: 9, width: 20, height: 20, borderRadius: "50%", background: `${th.primary}18`, border: `2px solid ${th.primary}` }} />
+            {/* Name */}
+            <div style={{ ...S, left: 5, top: 10, width: 58, height: 6, background: th.dark, borderRadius: 2 }} />
+            <div style={{ ...S, left: 5, top: 19, width: 40, height: 3, background: th.primary, borderRadius: 1.5 }} />
+            {/* Accent stripe before body */}
+            <div style={{ ...S, top: 30, left: 0, right: 0, height: 5, background: th.primary }} />
+            {/* Body lines */}
+            {[40,45,50,55,60,65,70].map((y, i) => (
+              <div key={i} style={{ ...S, left: i % 2 === 0 ? 4 : "52%", top: y, width: `${i % 3 === 0 ? 35 : 28}%`, height: 1.5, background: "#e2e8f0", borderRadius: 1 }} />
+            ))}
+            {/* Section labels */}
+            {[38,55].map((y, i) => <div key={i} style={{ ...S, left: 4, top: y, width: 20, height: 2.5, background: th.primary, borderRadius: 1 }} />)}
           </>
         )}
       </div>
-      <div className="p-1.5">
-        <div className="text-[9px] font-bold truncate">{t.name}</div>
-        <div className="text-[8px] text-muted-foreground">{t.theme.name}</div>
+      <div className="px-2 py-1.5">
+        <div className="text-[9px] font-bold truncate leading-tight">{t.name}</div>
+        <div className="text-[8px] text-muted-foreground">{t.category}</div>
       </div>
       {selected && <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#5B5CF6] flex items-center justify-center"><Check className="w-2.5 h-2.5 text-white" /></div>}
     </button>

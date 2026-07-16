@@ -274,15 +274,17 @@ export default function Premium() {
                   Step 1: Scan QR & Pay ₹{selectedAmount}
                 </div>
                 <div className="flex justify-center mb-4">
-                  <img
-                    src={qrImageUrl}
-                    alt="UPI QR Code — Shravani Bidri"
-                    className="w-64 h-64 object-contain rounded-2xl border-2 border-violet-100 shadow-lg"
-                    onError={e => {
-                      const el = e.target as HTMLImageElement;
-                      if (el.src !== DEFAULT_QR) el.src = DEFAULT_QR;
-                    }}
-                  />
+                  <div className="w-56 h-56 rounded-2xl border-2 border-violet-100 shadow-lg overflow-hidden">
+                    <img
+                      src={qrImageUrl}
+                      alt="UPI QR Code"
+                      className="w-full h-full object-cover object-center scale-[1.15]"
+                      onError={e => {
+                        const el = e.target as HTMLImageElement;
+                        if (el.src !== DEFAULT_QR) el.src = DEFAULT_QR;
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center justify-center gap-2 bg-muted/60 rounded-xl px-4 py-3">
                   <div className="text-left">

@@ -8,6 +8,8 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.set("trust proxy", true);
+
 const frontendDist =
   process.env.FRONTEND_DIST ??
   path.resolve(import.meta.dirname, "..", "..", "career-boost", "dist", "public");

@@ -8,6 +8,7 @@ import interviewRouter from "./interview.js";
 import paymentsRouter from "./payments.js";
 import adminRouter from "./admin.js";
 import statsRouter from "./stats.js";
+import googleRouter from "./google.js";
 
 const router: IRouter = Router();
 
@@ -21,5 +22,6 @@ router.use(interviewRouter);
 router.use(paymentsRouter);
 router.use(adminRouter);
 router.use(statsRouter);
+router.use(googleRouter);
 
 export default router;

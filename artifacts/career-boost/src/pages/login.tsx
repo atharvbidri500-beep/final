@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { setToken, getToken } from "@/lib/auth";
+import GoogleIcon from "@/components/GoogleIcon";
 
 function HirePilotLogo() {
   return (
@@ -137,6 +138,20 @@ export default function Login() {
               ) : "Sign In"}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <a
+            href="/api/auth/google"
+            className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
+          >
+            <GoogleIcon />
+            Sign in with Google
+          </a>
 
           <p className="text-sm text-center text-muted-foreground mt-4">
             Don't have an account?{" "}

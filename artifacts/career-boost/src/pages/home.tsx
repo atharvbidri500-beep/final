@@ -4,7 +4,7 @@ import { FileText, Mic, Target, Star, CheckCircle2, TrendingUp, ArrowRight, Spar
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
-import { getToken } from "@/lib/auth";
+import { getToken, setToken } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
 function HirePilotLogo({ size = 40 }: { size?: number }) {
@@ -114,6 +114,13 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleToken = params.get("token");
+    if (googleToken) {
+      setToken(googleToken);
+      window.location.href = "/";
+      return;
+    }
     fetch("/api/stats/public")
       .then(r => r.json())
       .then(d => {

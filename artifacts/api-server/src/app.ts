@@ -10,9 +10,9 @@ const app: Express = express();
 
 app.set("trust proxy", true);
 
-const frontendDist =
-  process.env.FRONTEND_DIST ??
-  path.resolve(import.meta.dirname, "..", "..", "career-boost", "dist", "public");
+const frontendDist = process.env.FRONTEND_DIST
+  ? path.resolve(process.env.FRONTEND_DIST)
+  : path.resolve(import.meta.dirname, "..", "..", "career-boost", "dist", "public");
 const hasFrontend = fs.existsSync(path.join(frontendDist, "index.html"));
 
 app.use(

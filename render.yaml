@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     autoDeploy: true
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server build && cd artifacts/career-boost && PORT=5173 BASE_PATH=/ pnpm run build
+    buildCommand: corepack enable && corepack prepare pnpm@11.13.0 --activate && pnpm install && pnpm --filter @workspace/api-server build && cd artifacts/career-boost && PORT=5173 BASE_PATH=/ pnpm run build
     startCommand: node ./artifacts/api-server/dist/index.mjs
     envVars:
       - key: NODE_ENV

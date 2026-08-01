@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
 import { AuthGuard } from "@/components/AuthGuard";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface ScoreResult {
   overallScore: number;
@@ -51,6 +52,8 @@ export default function ResumeScore() {
   const [jobRole, setJobRole] = useState("");
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeMsg, setUpgradeMsg] = useState<string | undefined>();
 
   async function analyzeResume() {
     if (!resumeText.trim()) { toast({ title: "Please paste your resume text", variant: "destructive" }); return; }
@@ -62,6 +65,7 @@ export default function ResumeScore() {
         body: JSON.stringify({ resumeText, jobRole }),
       });
       const data = await res.json();
+      if (res.status === 402) { setUpgradeMsg(data.message); setUpgradeOpen(true); return; }
       if (!res.ok) throw new Error(data.error);
       setResult(data);
     } catch (err: any) {
@@ -72,11 +76,12 @@ export default function ResumeScore() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
-        <AuthGuard token={token} featureName="the Resume Score Checker">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+    <>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+          <AuthGuard token={token} featureName="the Resume Score Checker">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
               <Target className="w-5 h-5 text-white" />
@@ -170,5 +175,7 @@ export default function ResumeScore() {
       </div>
       <BottomNav />
     </div>
+    <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} message={upgradeMsg} />
+  </>
   );
 }

@@ -24,13 +24,13 @@ function startOfMonth(): Date {
 
 /* Returns whether the user is currently an active Pro subscriber */
 async function isProUser(userId: number): Promise<boolean> {
-  const [user] = await db.select({ isPremium: usersTable.isPremium, expiresAt: usersTable.premiumExpiresAt })
+  const [user] = await db.select({ isPremium: usersTable.isPremium, premiumExpiresAt: usersTable.premiumExpiresAt })
     .from(usersTable)
     .where(eq(usersTable.id, userId));
   if (!user) return false;
   if (!user.isPremium) return false;
-  if (!user.expiresAt) return true;          // no expiry = lifetime
-  return user.expiresAt > new Date();
+  if (!user.premiumExpiresAt) return true;          // no expiry = lifetime
+  return user.premiumExpiresAt > new Date();
 }
 
 /* Returns a 402-ready error payload or null (under limit) */
@@ -88,6 +88,26 @@ export async function checkLimit(
       return {
         over: true,
         message: `Free plan: ${FREE_LIMITS.resumePerMonth} resume saves per month. You've used ${used}. Upgrade to Pro for unlimited resumes.`,
+      };
+    }
+  }
+
+  if (feature === "english") {
+    const [row] = await db
+      .select({ n: usersTable.englishUseCount, d: usersTable.englishUseDate })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    let used = Number(row?.n ?? 0);
+    const lastDate = row?.d;
+    const today = startOfToday();
+    if (!lastDate || lastDate < today) {
+      used = 0;
+      await db.update(usersTable).set({ englishUseCount: 0, englishUseDate: today }).where(eq(usersTable.id, userId));
+    }
+    if (used >= FREE_LIMITS.englishPerDay) {
+      return {
+        over: true,
+        message: `Free plan: ${FREE_LIMITS.englishPerDay} English improvements per day. You've used ${used}. Upgrade to Pro for unlimited usage.`,
       };
     }
   }

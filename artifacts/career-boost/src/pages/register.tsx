@@ -48,7 +48,7 @@ export default function Register() {
 
   const existingToken = getToken();
   if (existingToken) {
-    navigate("/dashboard");
+    navigate("/");
     return null;
   }
 
@@ -84,7 +84,7 @@ export default function Register() {
       }
       setToken(data.token);
       toast({ title: "Welcome to HirePilot! 🚀", description: "Your account has been created." });
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       toast({ title: "Registration failed", description: err.message, variant: "destructive" });
     } finally {

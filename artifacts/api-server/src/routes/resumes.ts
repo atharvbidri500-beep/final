@@ -298,6 +298,8 @@ router.post("/resumes", async (req, res): Promise<void> => {
 router.post("/resumes/analyze", async (req, res): Promise<void> => {
   const userId = (req as any).userId as number | undefined;
   if (!userId) { res.status(401).json({ error: "Login required to analyze a resume" }); return; }
+  const limit = await checkLimit(userId, "resume");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
   const { resumeText, jobRole } = req.body;
   if (!resumeText) { res.status(400).json({ error: "resumeText is required" }); return; }
   if (resumeText.trim().length < 20) { res.status(400).json({ error: "Please paste your full resume text" }); return; }
@@ -312,6 +314,8 @@ router.get("/resumes/analyze", async (_req, res): Promise<void> => {
 router.post("/resumes/job-match", async (req, res): Promise<void> => {
   const userId = (req as any).userId as number | undefined;
   if (!userId) { res.status(401).json({ error: "Login required to use job match" }); return; }
+  const limit = await checkLimit(userId, "resume");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
   const { resumeText, jobDescription } = req.body;
   if (!resumeText || !jobDescription) { res.status(400).json({ error: "resumeText and jobDescription are required" }); return; }
   const result = await jobMatchWithAI(resumeText, jobDescription);

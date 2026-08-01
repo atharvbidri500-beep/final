@@ -80,6 +80,8 @@ router.get("/supporters/qr", async (req, res): Promise<void> => {
 });
 
 router.post("/supporters", async (req, res): Promise<void> => {
+  const userId = (req as any).userId as number | undefined;
+  if (!userId) { res.status(401).json({ error: "Login required to submit support" }); return; }
   const { name, mobile, amount, upiTransactionId } = req.body;
   if (!name || !mobile || !amount || !upiTransactionId) {
     res.status(400).json({ error: "All fields are required" });

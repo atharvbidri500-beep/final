@@ -1,17 +1,22 @@
 import { Link, useLocation } from "wouter";
 import { Home, FileText, Mic, LayoutDashboard, Crown, Map } from "lucide-react";
 import { motion } from "framer-motion";
-
-const items = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/resume-builder", icon: FileText, label: "Resume" },
-  { href: "/interview", icon: Mic, label: "Interview" },
-  { href: "/career-roadmap", icon: Map, label: "Roadmap" },
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-];
+import { getToken } from "@/lib/auth";
 
 export function BottomNav() {
   const [location] = useLocation();
+  const token = getToken();
+
+  const items = [
+    { href: "/", icon: Home, label: "Home" },
+    { href: "/resume-builder", icon: FileText, label: "Resume" },
+    { href: "/interview", icon: Mic, label: "Interview" },
+    { href: "/career-roadmap", icon: Map, label: "Roadmap" },
+  ];
+
+  if (token) {
+    items.push({ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" });
+  }
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl">

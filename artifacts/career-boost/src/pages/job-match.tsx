@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
 import { AuthGuard } from "@/components/AuthGuard";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface MatchResult {
   matchPercentage: number;
@@ -24,6 +25,8 @@ export default function JobMatch() {
   const [jobDescription, setJobDescription] = useState("");
   const [result, setResult] = useState<MatchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeMsg, setUpgradeMsg] = useState<string | undefined>();
 
   async function analyzeMatch() {
     if (!resumeText.trim() || !jobDescription.trim()) {
@@ -38,6 +41,7 @@ export default function JobMatch() {
         body: JSON.stringify({ resumeText, jobDescription }),
       });
       const data = await res.json();
+      if (res.status === 402) { setUpgradeMsg(data.message); setUpgradeOpen(true); return; }
       if (!res.ok) throw new Error(data.error);
       setResult(data);
     } catch (err: any) {
@@ -54,11 +58,12 @@ export default function JobMatch() {
     : "";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
-        <AuthGuard token={token} featureName="the Job Match Analyzer">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+    <>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+          <AuthGuard token={token} featureName="the Job Match Analyzer">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
@@ -157,5 +162,7 @@ export default function JobMatch() {
       </div>
       <BottomNav />
     </div>
+    <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} message={upgradeMsg} />
+  </>
   );
 }

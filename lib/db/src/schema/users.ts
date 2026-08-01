@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,9 +11,11 @@ export const usersTable = pgTable("users", {
   city: text("city"),
   isPremium: boolean("is_premium").notNull().default(false),
   premiumExpiresAt: timestamp("premium_expires_at", { withTimezone: true }),
-  resumeCount: serial("resume_count").notNull(),
-  coverLetterCount: serial("cover_letter_count").notNull(),
-  interviewCount: serial("interview_count").notNull(),
+  resumeCount: integer("resume_count").notNull().default(0),
+  coverLetterCount: integer("cover_letter_count").notNull().default(0),
+  interviewCount: integer("interview_count").notNull().default(0),
+  englishUseCount: integer("english_use_count").notNull().default(0),
+  englishUseDate: timestamp("english_use_date", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

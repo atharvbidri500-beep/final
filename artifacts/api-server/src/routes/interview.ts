@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
-import { db, interviewSessionsTable } from "@workspace/db";
+import { eq, desc, sql } from "drizzle-orm";
+import { db, interviewSessionsTable, usersTable } from "@workspace/db";
 import { askAI, safeParseJSON } from "../lib/ai.js";
 import { checkLimit } from "../lib/limits.js";
 
@@ -261,6 +261,8 @@ router.get("/interview/sessions/:id", async (req, res): Promise<void> => {
 router.post("/interview/question", async (req, res): Promise<void> => {
   const userId = (req as any).userId as number | undefined;
   if (!userId) { res.status(401).json({ error: "Login required to get interview questions" }); return; }
+  const limit = await checkLimit(userId, "interview");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
   const { category, count = 0, previousQuestions = [] } = req.body;
   if (!category) { res.status(400).json({ error: "category is required" }); return; }
   const question = await generateAIQuestion(category, count, previousQuestions);
@@ -273,21 +275,22 @@ router.post("/interview/answer", async (req, res): Promise<void> => {
   const { sessionId, question, answer, category } = req.body;
   if (!question || !answer) { res.status(400).json({ error: "question and answer are required" }); return; }
   if (answer.trim().length < 5) { res.status(400).json({ error: "Please provide a meaningful answer" }); return; }
+  if (!sessionId) { res.status(400).json({ error: "Active session required to submit answer" }); return; }
 
   const result = await evaluateWithAI(question, answer, category ?? "hr");
 
-  if (sessionId) {
-    const [session] = await db.select().from(interviewSessionsTable).where(eq(interviewSessionsTable.id, sessionId));
-    if (session && session.userId === userId) {
-      const newCount = session.questionCount + 1;
-      const newAvgComm = Math.floor(((session.avgCommunicationScore ?? 0) * session.questionCount + result.communicationScore) / newCount);
-      const newAvgConf = Math.floor(((session.avgConfidenceScore ?? 0) * session.questionCount + result.confidenceScore) / newCount);
-      await db.update(interviewSessionsTable).set({
-        questionCount: newCount,
-        avgCommunicationScore: newAvgComm,
-        avgConfidenceScore: newAvgConf,
-      }).where(eq(interviewSessionsTable.id, sessionId));
-    }
+  const [session] = await db.select().from(interviewSessionsTable).where(eq(interviewSessionsTable.id, sessionId));
+  if (session && session.userId === userId) {
+    const newCount = session.questionCount + 1;
+    const newAvgComm = Math.floor(((session.avgCommunicationScore ?? 0) * session.questionCount + result.communicationScore) / newCount);
+    const newAvgConf = Math.floor(((session.avgConfidenceScore ?? 0) * session.questionCount + result.confidenceScore) / newCount);
+    await db.update(interviewSessionsTable).set({
+      questionCount: newCount,
+      avgCommunicationScore: newAvgComm,
+      avgConfidenceScore: newAvgConf,
+    }).where(eq(interviewSessionsTable.id, sessionId));
+  } else {
+    res.status(403).json({ error: "Session not found or access denied" }); return;
   }
 
   res.json(result);
@@ -298,6 +301,12 @@ router.post("/interview/improve-english", async (req, res): Promise<void> => {
   if (!userId) { res.status(401).json({ error: "Login required to use English tool" }); return; }
   const { text } = req.body;
   if (!text || text.trim().length < 3) { res.status(400).json({ error: "Please enter some text to improve" }); return; }
+
+  const limit = await checkLimit(userId, "english");
+  if (limit.over) { res.status(402).json({ error: "UPGRADE_REQUIRED", message: limit.message }); return; }
+
+  await db.update(usersTable).set({ englishUseCount: sql`${usersTable.englishUseCount} + 1`, englishUseDate: new Date() }).where(eq(usersTable.id, userId));
+
   const result = await improveEnglishWithAI(text);
   res.json(result);
 });

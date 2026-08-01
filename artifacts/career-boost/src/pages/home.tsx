@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { FileText, Mic, Target, Star, CheckCircle2, TrendingUp, ArrowRight, Sparkles, Crown, Rocket, Globe, ChevronDown, LayoutDashboard } from "lucide-react";
+import { FileText, Mic, Target, Star, CheckCircle2, TrendingUp, ArrowRight, Sparkles, Crown, Rocket, Globe, ChevronDown, LayoutDashboard, FilePen, Headset, Gauge, Handshake, PenLine, Languages } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -45,12 +45,12 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 }
 
 const features = [
-  { icon: FileText, title: "AI Resume Builder", desc: "Build ATS-optimized resumes with Indian industry templates in minutes", color: "from-[#5B5CF6] to-[#8B5CF6]", href: "/resume-builder" },
-  { icon: Mic, title: "Interview Coach", desc: "Practice with real interview questions for HR, Tech, Banking and more", color: "from-[#06B6D4] to-blue-600", href: "/interview" },
-  { icon: Target, title: "Resume Score", desc: "Get ATS score, skill score and formatting feedback on your resume", color: "from-emerald-500 to-teal-600", href: "/resume-score" },
-  { icon: TrendingUp, title: "Job Match AI", desc: "Match your resume against job descriptions and find skill gaps", color: "from-amber-500 to-orange-600", href: "/job-match" },
-  { icon: Star, title: "Cover Letter", desc: "Generate personalized cover letters for any company in 30 seconds", color: "from-pink-500 to-rose-600", href: "/cover-letter" },
-  { icon: Globe, title: "English Polish", desc: "Improve your professional English for emails, resumes and interviews", color: "from-violet-500 to-purple-600", href: "/english-tool" },
+  { icon: FilePen, title: "AI Resume Builder", desc: "Build ATS-optimized resumes with Indian industry templates in minutes", color: "from-[#5B5CF6] to-[#8B5CF6]", href: "/resume-builder" },
+  { icon: Headset, title: "Interview Coach", desc: "Practice with real interview questions for HR, Tech, Banking and more", color: "from-[#06B6D4] to-blue-600", href: "/interview" },
+  { icon: Gauge, title: "Resume Score", desc: "Get ATS score, skill score and formatting feedback on your resume", color: "from-emerald-500 to-teal-600", href: "/resume-score" },
+  { icon: Handshake, title: "Job Match AI", desc: "Match your resume against job descriptions and find skill gaps", color: "from-amber-500 to-orange-600", href: "/job-match" },
+  { icon: PenLine, title: "Cover Letter", desc: "Generate personalized cover letters for any company in 30 seconds", color: "from-pink-500 to-rose-600", href: "/cover-letter" },
+  { icon: Languages, title: "English Polish", desc: "Improve your professional English for emails, resumes and interviews", color: "from-violet-500 to-purple-600", href: "/english-tool" },
 ];
 
 const testimonials = [
@@ -106,6 +106,26 @@ const faqs = [
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const token = getToken();
+  const [liveStats, setLiveStats] = useState([
+    { label: "Resumes Created", value: 12847, suffix: "+" },
+    { label: "Interviews Practiced", value: 8923, suffix: "+" },
+    { label: "Students Placed", value: 5234, suffix: "+" },
+    { label: "Success Rate", value: 94, suffix: "%" },
+  ]);
+
+  useEffect(() => {
+    fetch("/api/stats/public")
+      .then(r => r.json())
+      .then(d => {
+        setLiveStats([
+          { label: "Resumes Created", value: d.resumesCreated ?? 12847, suffix: "+" },
+          { label: "Interviews Practiced", value: d.interviewsPracticed ?? 8923, suffix: "+" },
+          { label: "Students Placed", value: d.activeUsers ?? 5234, suffix: "+" },
+          { label: "Success Rate", value: d.successStories ?? 94, suffix: "%" },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,12 +231,7 @@ export default function Home() {
           transition={{ delay: 0.4 }}
           className="max-w-3xl mx-auto mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4"
         >
-          {[
-            { label: "Resumes Created", value: 12847, suffix: "+" },
-            { label: "Interviews Practiced", value: 8923, suffix: "+" },
-            { label: "Students Placed", value: 5234, suffix: "+" },
-            { label: "Success Rate", value: 94, suffix: "%" },
-          ].map((stat) => (
+          {liveStats.map((stat) => (
             <div key={stat.label} className="text-center p-4 rounded-2xl bg-card border border-border shadow-sm">
               <div className="text-2xl font-bold bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] bg-clip-text text-transparent">
                 <AnimatedCounter target={stat.value} suffix={stat.suffix} />

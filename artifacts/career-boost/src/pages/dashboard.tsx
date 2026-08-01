@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { FileText, Mic, Star, Mail, Crown, LogOut, TrendingUp, Zap, Rocket, BarChart2, Map, Target, ChevronRight, Users } from "lucide-react";
+import { FileText, Mic, Mail, Crown, LogOut, Map, Target, ChevronRight, FilePen, Headset, Gauge, Handshake, PenLine, Languages, Clock } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,21 @@ interface UserStats {
   coverLetterCount: number;
 }
 
+interface RecentResume {
+  id: number;
+  title: string;
+  template: string;
+  atsScore: number | null;
+  createdAt: string | null;
+}
+
 const quickActions = [
-  { href: "/resume-builder", icon: FileText, label: "Build Resume", color: "from-[#5B5CF6] to-[#8B5CF6]" },
-  { href: "/interview", icon: Mic, label: "Mock Interview", color: "from-[#06B6D4] to-blue-600" },
-  { href: "/resume-score", icon: Star, label: "Score Resume", color: "from-emerald-500 to-teal-600" },
-  { href: "/cover-letter", icon: Mail, label: "Cover Letter", color: "from-pink-500 to-rose-600" },
-  { href: "/job-match", icon: TrendingUp, label: "Job Match", color: "from-amber-500 to-orange-600" },
-  { href: "/english-tool", icon: Zap, label: "English Tool", color: "from-violet-500 to-purple-600" },
+  { href: "/resume-builder", icon: FilePen, label: "Build Resume", sub: "ATS-ready templates", color: "from-[#5B5CF6] to-[#8B5CF6]" },
+  { href: "/interview", icon: Headset, label: "Mock Interview", sub: "AI practice sessions", color: "from-[#06B6D4] to-blue-600" },
+  { href: "/resume-score", icon: Gauge, label: "Score Resume", sub: "ATS + skill analysis", color: "from-emerald-500 to-teal-600" },
+  { href: "/job-match", icon: Handshake, label: "Job Match", sub: "Find skill gaps", color: "from-amber-500 to-orange-600" },
+  { href: "/cover-letter", icon: PenLine, label: "Cover Letter", sub: "30-second letters", color: "from-pink-500 to-rose-600" },
+  { href: "/english-tool", icon: Languages, label: "English Tool", sub: "Polish your English", color: "from-violet-500 to-purple-600" },
 ];
 
 function SkeletonCard() {
@@ -122,45 +130,25 @@ function PlacementScore({ user }: { user: UserStats }) {
   );
 }
 
-function ActivityBar({ day, count, max }: { day: string; count: number; max: number }) {
-  const pct = max === 0 ? 0 : (count / max) * 100;
-  return (
-    <div className="flex flex-col items-center gap-1 flex-1">
-      <div className="relative w-full flex justify-center" style={{ height: 48 }}>
-        <div className="absolute bottom-0 w-4 bg-muted rounded-full" style={{ height: "100%" }} />
-        <motion.div
-          initial={{ height: 0 }}
-          animate={{ height: `${pct}%` }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="absolute bottom-0 w-4 bg-gradient-to-t from-[#5B5CF6] to-[#8B5CF6] rounded-full"
-        />
-      </div>
-      <span className="text-[9px] text-muted-foreground">{day}</span>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const token = getToken();
   const [user, setUser] = useState<UserStats | null>(null);
+  const [recentResumes, setRecentResumes] = useState<RecentResume[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const weeklyActivity = ["M", "T", "W", "T", "F", "S", "S"].map((d, i) => ({
-    day: d,
-    count: Math.floor(Math.random() * 5),
-  }));
-  const maxActivity = Math.max(...weeklyActivity.map(w => w.count), 1);
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
-    fetch("/api/users/me", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/users/me/dashboard", { headers: { Authorization: `Bearer ${token}` } })
       .then(r => {
         if (!r.ok) throw new Error("Unauthorized");
         return r.json();
       })
-      .then(d => setUser(d))
-      .catch(() => { clearToken(); navigate("/login"); })
+      .then(d => {
+        setUser(d);
+        setRecentResumes(Array.isArray(d.recentResumes) ? d.recentResumes : []);
+      })
+      .catch(() => { /* don't clear token on network error */ })
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -172,7 +160,7 @@ export default function Dashboard() {
       <div className="pt-20 pb-28 px-4 max-w-4xl mx-auto">
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <div className="flex items-start justify-between">
             <div>
               {loading ? (
@@ -196,7 +184,7 @@ export default function Dashboard() {
               ) : (
                 <Link href="/premium">
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-sm font-medium cursor-pointer hover:bg-violet-100 transition-colors">
-                    <Rocket className="w-3.5 h-3.5" /> Upgrade to Pro — from ₹99/month
+                    <Crown className="w-3.5 h-3.5" /> Upgrade to Pro — from ₹99/month
                   </div>
                 </Link>
               )}
@@ -205,17 +193,22 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Activity stats */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="grid grid-cols-3 gap-3 mb-4">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="grid grid-cols-3 gap-3 mb-5">
           {loading ? [1,2,3].map(i => <SkeletonCard key={i} />) : (
             [
-              { label: "Resumes", value: user?.resumeCount ?? 0, color: "text-violet-600", bg: "bg-violet-50" },
-              { label: "Interviews", value: user?.interviewCount ?? 0, color: "text-cyan-600", bg: "bg-cyan-50" },
-              { label: "Cover Letters", value: user?.coverLetterCount ?? 0, color: "text-rose-500", bg: "bg-rose-50" },
+              { label: "Resumes", value: user?.resumeCount ?? 0, color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100", icon: FileText },
+              { label: "Interviews", value: user?.interviewCount ?? 0, color: "text-cyan-600", bg: "bg-cyan-50", border: "border-cyan-100", icon: Mic },
+              { label: "Cover Letters", value: user?.coverLetterCount ?? 0, color: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", icon: Mail },
             ].map((stat, i) => (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}
-                className={`p-4 rounded-2xl ${stat.bg} border border-border/50 text-center`}>
-                <div className={`text-2xl font-black ${stat.color}`}>{stat.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+                className={`p-4 rounded-2xl ${stat.bg} ${stat.border} border flex items-center gap-3`}>
+                <div className={`w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0`}>
+                  <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
+                </div>
+                <div>
+                  <div className={`text-2xl font-black leading-none ${stat.color}`}>{stat.value}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+                </div>
               </motion.div>
             ))
           )}
@@ -223,46 +216,62 @@ export default function Dashboard() {
 
         {/* Placement Readiness */}
         {!loading && user && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-4">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-5">
             <PlacementScore user={user} />
           </motion.div>
         )}
-        {loading && <div className="h-44 rounded-2xl bg-muted animate-pulse mb-4" />}
-
-        {/* Weekly activity */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-4 rounded-2xl bg-card border border-border mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <BarChart2 className="w-4 h-4 text-[#5B5CF6]" />
-              <span className="font-semibold text-sm">This Week's Activity</span>
-            </div>
-            <span className="text-xs text-muted-foreground">Practice sessions</span>
-          </div>
-          <div className="flex gap-1 items-end">
-            {weeklyActivity.map((w, i) => (
-              <ActivityBar key={i} day={w.day} count={w.count} max={maxActivity} />
-            ))}
-          </div>
-        </motion.div>
+        {loading && <div className="h-44 rounded-2xl bg-muted animate-pulse mb-5" />}
 
         {/* Quick Actions */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-5">
           <h2 className="font-semibold text-sm mb-3">Quick Actions</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {quickActions.map((action, i) => (
-              <motion.div key={action.href} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.04 }} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+              <motion.div key={action.href} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 + i * 0.04 }} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
                 <Link href={action.href}>
                   <div className="p-4 rounded-2xl bg-card border border-border hover:border-violet-200 hover:shadow-md transition-all cursor-pointer group">
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                       <action.icon className="w-5 h-5 text-white" />
                     </div>
                     <div className="font-medium text-sm">{action.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{action.sub}</div>
                   </div>
                 </Link>
               </motion.div>
             ))}
           </div>
         </motion.div>
+
+        {/* Recent Resumes */}
+        {!loading && recentResumes.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-5">
+            <h2 className="font-semibold text-sm mb-3">Recent Resumes</h2>
+            <div className="space-y-2">
+              {recentResumes.map(r => (
+                <Link key={r.id} href="/resume-builder">
+                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border hover:border-violet-200 hover:shadow-md transition-all cursor-pointer group">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5B5CF6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{r.title || "My Resume"}</div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Recently"}
+                      </div>
+                    </div>
+                    {r.atsScore != null && (
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.atsScore >= 80 ? "bg-emerald-50 text-emerald-600" : r.atsScore >= 60 ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>
+                        {r.atsScore}%
+                      </span>
+                    )}
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Career Roadmap CTA */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-4">

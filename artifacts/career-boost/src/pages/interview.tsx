@@ -152,195 +152,208 @@ export default function Interview() {
 
   if (!category) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <Mic className="w-5 h-5 text-white" />
+      <>
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <Mic className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">AI Interview Coach</h1>
+                  <p className="text-sm text-muted-foreground">Choose a category to start practicing</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold">AI Interview Coach</h1>
-                <p className="text-sm text-muted-foreground">Choose a category to start practicing</p>
+              <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                <Sparkles className="w-4 h-4 text-cyan-600 flex-shrink-0" />
+                <p className="text-xs text-cyan-700 font-medium">AI generates fresh questions every session — no two sessions are the same</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-200">
-              <Sparkles className="w-4 h-4 text-cyan-600 flex-shrink-0" />
-              <p className="text-xs text-cyan-700 font-medium">AI generates fresh questions every session — no two sessions are the same</p>
-            </div>
-            <div className="grid gap-3">
-              {CATEGORIES.map((cat, i) => (
-                <motion.button
-                  key={cat.id}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.07 }}
-                  onClick={() => startSession(cat.id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-cyan-200 hover:shadow-md transition-all text-left group"
-                >
-                  <span className="text-2xl">{cat.emoji}</span>
-                  <div className="flex-1">
-                    <div className="font-semibold">{cat.label}</div>
-                    <div className="text-sm text-muted-foreground">{cat.desc}</div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-cyan-600 transition-colors" />
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
+              <div className="grid gap-3">
+                {CATEGORIES.map((cat, i) => (
+                  <motion.button
+                    key={cat.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.07 }}
+                    onClick={() => startSession(cat.id)}
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-cyan-200 hover:shadow-md transition-all text-left group"
+                  >
+                    <span className="text-2xl">{cat.emoji}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold">{cat.label}</div>
+                      <div className="text-sm text-muted-foreground">{cat.desc}</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-cyan-600 transition-colors" />
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+          <BottomNav />
         </div>
-        <BottomNav />
-      </div>
+        <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} message={upgradeMsg} />
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <Mic className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <div className="font-semibold">{CATEGORIES.find(c => c.id === category)?.label}</div>
-                <div className="text-xs text-muted-foreground">Question {qIndex + 1} of {maxQuestions}</div>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setCategory(null)}>
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-full h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${((qIndex + 1) / maxQuestions) * 100}%` }}
-              transition={{ duration: 0.4 }}
-            />
-          </div>
-
-          {/* Session score */}
-          {sessionScore.count > 0 && (
-            <div className="flex gap-3 mb-4">
-              <div className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
-                <MessageSquare className="w-4 h-4 text-indigo-600" />
+    <>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <Mic className="w-4 h-4 text-white" />
+                </div>
                 <div>
-                  <div className="text-xs text-indigo-600 font-medium">Communication</div>
-                  <div className="font-bold text-indigo-900">{sessionScore.comm}%</div>
+                  <div className="font-semibold">{CATEGORIES.find(c => c.id === category)?.label}</div>
+                  <div className="text-xs text-muted-foreground">Question {qIndex + 1} of {maxQuestions}</div>
                 </div>
               </div>
-              <div className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-cyan-50 border border-cyan-100">
-                <TrendingUp className="w-4 h-4 text-cyan-600" />
-                <div>
-                  <div className="text-xs text-cyan-600 font-medium">Confidence</div>
-                  <div className="font-bold text-cyan-900">{sessionScore.conf}%</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Question */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-cyan-50 border border-indigo-100 mb-4 min-h-[90px] flex items-center">
-            {loadingQuestion ? (
-              <div className="flex items-center gap-3 w-full">
-                <Loader2 className="w-5 h-5 animate-spin text-cyan-600 flex-shrink-0" />
-                <div>
-                  <div className="text-xs text-indigo-500 mb-1">AI is generating your question…</div>
-                  <div className="h-3 bg-indigo-100 rounded animate-pulse w-64" />
-                </div>
-              </div>
-            ) : (
-              <div className="w-full">
-                <div className="flex items-center gap-2 text-xs font-medium text-indigo-600 mb-2">
-                  <Sparkles className="w-3 h-3" /> Question {qIndex + 1}
-                </div>
-                <p className="font-semibold text-lg leading-relaxed">{currentQuestion}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Answer / Feedback */}
-          {!feedback ? (
-            <div className="space-y-3">
-              <Textarea
-                value={answer}
-                onChange={e => setAnswer(e.target.value)}
-                placeholder="Type your answer here... Speak it out loud first, then write it down for best practice."
-                className="h-40 resize-none"
-                disabled={loadingQuestion}
-              />
-              <Button
-                onClick={submitAnswer}
-                disabled={loadingAnswer || loadingQuestion || !currentQuestion}
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 gap-2"
-              >
-                {loadingAnswer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {loadingAnswer ? "Evaluating with AI…" : "Submit Answer"}
+              <Button variant="ghost" size="sm" onClick={() => setCategory(null)}>
+                <RotateCcw className="w-4 h-4" />
               </Button>
             </div>
-          ) : (
-            <AnimatePresence>
+
+            {/* Progress bar */}
+            <div className="w-full h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
               <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-3"
-              >
-                {/* Scores */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl bg-card border border-border text-center">
-                    <div className="text-2xl font-bold text-indigo-600">{feedback.communicationScore}%</div>
-                    <div className="text-xs text-muted-foreground">Communication</div>
+                className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${((qIndex + 1) / maxQuestions) * 100}%` }}
+                transition={{ duration: 0.4 }}
+              />
+            </div>
+
+            {/* Session score */}
+            {sessionScore.count > 0 && (
+              <div className="flex gap-3 mb-4">
+                <div className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                  <MessageSquare className="w-4 h-4 text-indigo-600" />
+                  <div>
+                    <div className="text-xs text-indigo-600 font-medium">Communication</div>
+                    <div className="font-bold text-indigo-900">{sessionScore.comm}%</div>
                   </div>
-                  <div className="p-4 rounded-2xl bg-card border border-border text-center">
-                    <div className="text-2xl font-bold text-cyan-600">{feedback.confidenceScore}%</div>
-                    <div className="text-xs text-muted-foreground">Confidence</div>
+                </div>
+                <div className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-cyan-50 border border-cyan-100">
+                  <TrendingUp className="w-4 h-4 text-cyan-600" />
+                  <div>
+                    <div className="text-xs text-cyan-600 font-medium">Confidence</div>
+                    <div className="font-bold text-cyan-900">{sessionScore.conf}%</div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Feedback */}
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
-                  <div className="text-sm font-semibold text-amber-900 mb-1">💬 AI Feedback</div>
-                  <p className="text-sm text-amber-800">{feedback.feedback}</p>
-                </div>
-
-                {/* Strengths */}
-                {feedback.strengths.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-                    <div className="text-sm font-semibold text-emerald-900 mb-2">✅ Strengths</div>
-                    {feedback.strengths.map((s, i) => <p key={i} className="text-sm text-emerald-800">• {s}</p>)}
+            {/* Question */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-cyan-50 border border-indigo-100 mb-4 min-h-[90px] flex items-center">
+              {loadingQuestion ? (
+                <div className="flex items-center gap-3 w-full">
+                  <Loader2 className="w-5 h-5 animate-spin text-cyan-600 flex-shrink-0" />
+                  <div>
+                    <div className="text-xs text-indigo-500 mb-1">AI is generating your question…</div>
+                    <div className="h-3 bg-indigo-100 rounded animate-pulse w-64" />
                   </div>
-                )}
-
-                {/* Improvements */}
-                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200">
-                  <div className="text-sm font-semibold text-rose-900 mb-2">📈 Improvements</div>
-                  {feedback.improvements.slice(0, 3).map((s, i) => <p key={i} className="text-sm text-rose-800">• {s}</p>)}
                 </div>
-
-                {/* Improved Answer */}
-                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200">
-                  <div className="text-sm font-semibold text-indigo-900 mb-2">⭐ Better Answer (AI Model)</div>
-                  <p className="text-sm text-indigo-800 leading-relaxed">{feedback.improvedAnswer}</p>
+              ) : (
+                <div className="w-full">
+                  <div className="flex items-center gap-2 text-xs font-medium text-indigo-600 mb-2">
+                    <Sparkles className="w-3 h-3" /> Question {qIndex + 1}
+                  </div>
+                  <p className="font-semibold text-lg leading-relaxed">{currentQuestion}</p>
                 </div>
+              )}
+            </div>
 
-                <Button onClick={nextQuestion} disabled={loadingQuestion} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 gap-2">
-                  {loadingQuestion ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  {qIndex < maxQuestions - 1 ? "Next Question" : "Finish Session"}
-                  <ChevronRight className="w-4 h-4" />
+            {/* Answer / Feedback */}
+            {!feedback ? (
+              <div className="space-y-3">
+                <Textarea
+                  value={answer}
+                  onChange={e => setAnswer(e.target.value)}
+                  placeholder="Type your answer here... Speak it out loud first, then write it down for best practice."
+                  className="h-40 resize-none"
+                  disabled={loadingQuestion}
+                />
+                <Button
+                  onClick={submitAnswer}
+                  disabled={loadingAnswer || loadingQuestion || !currentQuestion}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 gap-2"
+                >
+                  {loadingAnswer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {loadingAnswer ? "Evaluating with AI…" : "Submit Answer"}
                 </Button>
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </motion.div>
+              </div>
+            ) : (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  {/* Original Answer */}
+                  <div className="p-4 rounded-2xl bg-card border border-border">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Your Answer</div>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{answer}</p>
+                  </div>
+
+                  {/* Scores */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 rounded-2xl bg-card border border-border text-center">
+                      <div className="text-2xl font-bold text-indigo-600">{feedback.communicationScore}%</div>
+                      <div className="text-xs text-muted-foreground">Communication</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-card border border-border text-center">
+                      <div className="text-2xl font-bold text-cyan-600">{feedback.confidenceScore}%</div>
+                      <div className="text-xs text-muted-foreground">Confidence</div>
+                    </div>
+                  </div>
+
+                  {/* Feedback */}
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                    <div className="text-sm font-semibold text-amber-900 mb-1">💬 AI Feedback</div>
+                    <p className="text-sm text-amber-800">{feedback.feedback}</p>
+                  </div>
+
+                  {/* Strengths */}
+                  {feedback.strengths.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                      <div className="text-sm font-semibold text-emerald-900 mb-2">✅ Strengths</div>
+                      {feedback.strengths.map((s, i) => <p key={i} className="text-sm text-emerald-800">• {s}</p>)}
+                    </div>
+                  )}
+
+                  {/* Improvements */}
+                  <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                    <div className="text-sm font-semibold text-rose-900 mb-2">📈 Improvements</div>
+                    {feedback.improvements.slice(0, 3).map((s, i) => <p key={i} className="text-sm text-rose-800">• {s}</p>)}
+                  </div>
+
+                  {/* Improved Answer */}
+                  <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200">
+                    <div className="text-sm font-semibold text-indigo-900 mb-2">⭐ Better Answer (AI Model)</div>
+                    <p className="text-sm text-indigo-800 leading-relaxed">{feedback.improvedAnswer}</p>
+                  </div>
+
+                  <Button onClick={nextQuestion} disabled={loadingQuestion} className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 gap-2">
+                    {loadingQuestion ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {qIndex < maxQuestions - 1 ? "Next Question" : "Finish Session"}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </motion.div>
+              </AnimatePresence>
+            )}
+          </motion.div>
+        </div>
+        <BottomNav />
       </div>
-      <BottomNav />
-    </div>
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} message={upgradeMsg} />
+    </>
   );
 }
+

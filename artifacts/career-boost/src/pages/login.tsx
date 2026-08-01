@@ -39,7 +39,7 @@ export default function Login() {
 
   const existingToken = getToken();
   if (existingToken) {
-    navigate("/dashboard");
+    navigate("/");
     return null;
   }
 
@@ -60,7 +60,7 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error || "Login failed");
       setToken(data.token);
       toast({ title: "Welcome back! ✈️", description: `Logged in as ${data.user?.name ?? form.email}` });
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       toast({ title: "Login failed", description: err.message, variant: "destructive" });
     } finally {

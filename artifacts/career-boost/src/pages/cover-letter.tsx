@@ -160,6 +160,7 @@ export default function CoverLetter() {
         </motion.div>
       </div>
       <BottomNav />
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} message={upgradeMsg} />
     </div>
   );
 }

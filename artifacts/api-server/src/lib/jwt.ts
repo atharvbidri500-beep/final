@@ -7,9 +7,13 @@ function base64url(input: string | Buffer): string {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-export function sign(payload: Record<string, unknown>): string {
+export function sign(payload: Record<string, unknown>, expiresInDays = 30): string {
   const header = base64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const body = base64url(JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000) }));
+  const body = base64url(JSON.stringify({
+    ...payload,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + expiresInDays * 86400,
+  }));
   const sig = base64url(
     crypto.createHmac("sha256", SECRET).update(`${header}.${body}`).digest()
   );
@@ -25,7 +29,9 @@ export function verify(token: string): Record<string, unknown> | null {
       crypto.createHmac("sha256", SECRET).update(`${header}.${body}`).digest()
     );
     if (sig !== expected) return null;
-    return JSON.parse(Buffer.from(body, "base64").toString());
+    const decoded = JSON.parse(Buffer.from(body, "base64").toString());
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) return null;
+    return decoded;
   } catch {
     return null;
   }

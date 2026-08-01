@@ -274,11 +274,11 @@ export default function Premium() {
                   Step 1: Scan QR & Pay ₹{selectedAmount}
                 </div>
                 <div className="flex justify-center mb-4">
-                  <div className="w-56 h-56 rounded-2xl border-2 border-violet-100 shadow-lg overflow-hidden">
+                  <div className="w-56 h-56 rounded-2xl border-2 border-violet-100 shadow-lg overflow-hidden bg-white">
                     <img
                       src={qrImageUrl}
                       alt="UPI QR Code"
-                      className="w-full h-full object-cover object-center scale-[1.15]"
+                      className="w-full h-full object-contain p-1"
                       onError={e => {
                         const el = e.target as HTMLImageElement;
                         if (el.src !== DEFAULT_QR) el.src = DEFAULT_QR;
@@ -348,6 +348,10 @@ export default function Premium() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">📱 GPay → Transaction → Copy 12-digit ID</p>
                 </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <strong>⚠️ No Refunds:</strong> Payments for lower amounts cannot be refunded or credited. Pay only the exact plan amount shown above.
               </div>
 
               <Button

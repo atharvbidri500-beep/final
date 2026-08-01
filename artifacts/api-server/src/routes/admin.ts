@@ -6,7 +6,10 @@ import * as jwt from "../lib/jwt.js";
 const router = Router();
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "careerboost@admin2024";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  throw new Error("ADMIN_PASSWORD environment variable is required. Set a strong password in production.");
+}
 
 function adminAuth(req: any, res: any): boolean {
   const auth = req.headers.authorization;
@@ -68,8 +71,13 @@ router.post("/admin/users/:id/upgrade", async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   const { plan } = req.body;
   if (isNaN(id)) { res.status(400).json({ error: "Invalid user ID" }); return; }
-  const expiresAt = new Date();
-  expiresAt.setMonth(expiresAt.getMonth() + (plan === "yearly" ? 12 : 1));
+  if (plan && !["monthly", "yearly"].includes(plan)) {
+    res.status(400).json({ error: "plan must be 'monthly' or 'yearly'" }); return;
+  }
+  const monthsToAdd = plan === "yearly" ? 12 : 1;
+  const now = new Date();
+  const expiresAt = new Date(Math.max(now.getTime(), now.getTime()));
+  expiresAt.setMonth(expiresAt.getMonth() + monthsToAdd);
   const [user] = await db.update(usersTable)
     .set({ isPremium: true, premiumExpiresAt: expiresAt })
     .where(eq(usersTable.id, id))
@@ -116,7 +124,11 @@ router.post("/admin/payments/:id/approve", async (req, res): Promise<void> => {
   const [payment] = await db.update(paymentsTable).set({ status: "approved", reviewedAt: new Date() }).where(eq(paymentsTable.id, id)).returning();
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
   if (payment.userId) {
-    const expiresAt = new Date();
+    const [existingUser] = await db.select({ premiumExpiresAt: usersTable.premiumExpiresAt }).from(usersTable).where(eq(usersTable.id, payment.userId));
+    const baseDate = existingUser?.premiumExpiresAt && existingUser.premiumExpiresAt > new Date()
+      ? existingUser.premiumExpiresAt
+      : new Date();
+    const expiresAt = new Date(baseDate);
     expiresAt.setMonth(expiresAt.getMonth() + (payment.plan === "yearly" ? 12 : 1));
     await db.update(usersTable).set({ isPremium: true, premiumExpiresAt: expiresAt }).where(eq(usersTable.id, payment.userId));
   }

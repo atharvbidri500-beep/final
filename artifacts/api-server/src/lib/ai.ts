@@ -1,4 +1,4 @@
-const POLLINATIONS_URL = "https://text.pollinations.ai/";
+const POLLINATIONS_URL = "https://text.pollinations.ai/openai";
 
 interface Message {
   role: "system" | "user" | "assistant";
@@ -21,7 +21,6 @@ export async function askAI(
         messages,
         model: "openai",
         seed: Math.floor(Math.random() * 99999),
-        private: true,          // prevent caching so every call gets a fresh response
       };
 
       const res = await fetch(POLLINATIONS_URL, {

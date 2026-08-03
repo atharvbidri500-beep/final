@@ -44,9 +44,9 @@ function ruleIntelligence(text: string, skillsList: string[]) {
   const actionVerbs = ["developed", "built", "led", "managed", "created", "improved", "designed", "implemented", "increased", "reduced", "launched", "delivered", "automated", "optimized"].filter(v => lower.includes(v));
   const numbers = (text.match(/\d+%/g) ?? []).length + (text.match(/\b\d{2,}\b/g) ?? []).length;
 
-  const readability = Math.min(100, 20 + wordCount * 0.05 + sections * 8 + (bullets > 3 ? 15 : 0) + Math.min(15, actionVerbs.length * 3));
-  const health = Math.min(100, 25 + (hasEmail ? 12 : 0) + (hasPhone ? 10 : 0) + (sections >= 4 ? 20 : sections * 4) + (wordCount >= 200 ? 13 : 0) + (wordCount >= 350 ? 10 : 0) + (bullets >= 5 ? 10 : 0));
-  const keywordScore = Math.min(100, 30 + Math.min(40, skillsList.length * 4) + (actionVerbs.length >= 5 ? 15 : actionVerbs.length * 3) + (numbers > 0 ? 10 : 0));
+  const readability = Math.round(Math.min(100, 20 + wordCount * 0.05 + sections * 8 + (bullets > 3 ? 15 : 0) + Math.min(15, actionVerbs.length * 3)));
+  const health = Math.round(Math.min(100, 25 + (hasEmail ? 12 : 0) + (hasPhone ? 10 : 0) + (sections >= 4 ? 20 : sections * 4) + (wordCount >= 200 ? 13 : 0) + (wordCount >= 350 ? 10 : 0) + (bullets >= 5 ? 10 : 0)));
+  const keywordScore = Math.round(Math.min(100, 30 + Math.min(40, skillsList.length * 4) + (actionVerbs.length >= 5 ? 15 : actionVerbs.length * 3) + (numbers > 0 ? 10 : 0)));
   const quality = Math.round(health * 0.4 + keywordScore * 0.35 + readability * 0.25);
   const atsScore = Math.min(97, Math.round(health * 0.5 + keywordScore * 0.3 + (sections >= 4 ? 15 : sections * 3)));
   return { atsScore, qualityScore: quality, healthScore: health, readabilityScore: readability, keywordScore };

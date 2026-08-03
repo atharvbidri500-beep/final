@@ -32,7 +32,6 @@ jobs:
         env:
           PORT: "5173"
           BASE_PATH: "https://atharvbidri500-beep.github.io/final/"
-          VITE_API_URL: "https://hire-pilot-375z.onrender.com"
         run: pnpm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

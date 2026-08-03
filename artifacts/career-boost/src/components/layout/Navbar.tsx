@@ -34,6 +34,7 @@ const navLinks = [
   { href: "/english-tool", label: "English" },
   { href: "/resume-score", label: "Score" },
   { href: "/career-roadmap", label: "Roadmap" },
+  { href: "/copilot", label: "Copilot" },
 ];
 
 export function Navbar() {

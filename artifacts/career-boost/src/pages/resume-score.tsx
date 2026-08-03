@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
@@ -59,7 +60,7 @@ export default function ResumeScore() {
     if (!resumeText.trim()) { toast({ title: "Please paste your resume text", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/resumes/analyze", {
+      const res = await fetch(apiUrl("/api/resumes/analyze"), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ resumeText, jobRole }),

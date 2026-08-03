@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import http from "http";
+import { startSubscriptionEmailScheduler } from "./lib/emailJobs";
 
 const rawPort = process.env["PORT"];
 
@@ -38,4 +39,7 @@ app.listen(port, (err) => {
   }, PING_INTERVAL_MS);
 
   logger.info("Keep-alive self-ping enabled (every 4 minutes)");
+
+  /* ── Subscription lifecycle emails: renewal reminders + expiry notices ── */
+  startSubscriptionEmailScheduler();
 });

@@ -8,6 +8,7 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.disable("x-powered-by");
 app.set("trust proxy", true);
 
 const frontendDist = process.env.FRONTEND_DIST

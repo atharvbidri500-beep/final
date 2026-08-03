@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 const UPI_ID = "9579841359@fam";
@@ -19,7 +20,7 @@ export default function Support() {
 
   const { data: qrData } = useQuery({
     queryKey: ["support-qr"],
-    queryFn: () => fetch("/api/supporters/qr").then(r => r.json()),
+    queryFn: () => fetch(apiUrl("/api/supporters/qr")).then(r => r.json()),
   });
 
   async function submitSupport() {
@@ -29,7 +30,7 @@ export default function Support() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/supporters", {
+      const res = await fetch(apiUrl("/api/supporters"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

@@ -74,12 +74,12 @@ export function UpgradeModal({ open, onClose, message }: Props) {
                 {/* Pricing */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-center">
-                    <div className="text-lg font-black text-[#5B5CF6]">₹99</div>
+                    <div className="text-lg font-black text-[#5B5CF6]">₹149</div>
                     <div className="text-xs text-gray-500">/ month</div>
                   </div>
                   <div className="p-3 rounded-xl bg-violet-50 border border-violet-200 text-center relative">
                     <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">BEST VALUE</div>
-                    <div className="text-lg font-black text-[#5B5CF6]">₹499</div>
+                    <div className="text-lg font-black text-[#5B5CF6]">₹1,499</div>
                     <div className="text-xs text-gray-500">/ year</div>
                   </div>
                 </div>

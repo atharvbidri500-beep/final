@@ -1,9 +1,15 @@
 import { Router } from "express";
-import { pool } from "@workspace/db";
+import { pool, db, emailPreferencesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import * as jwt from "../lib/jwt.js";
+import { rateLimit } from "../middlewares/rateLimit.js";
+import { sendWelcomeEmail, createNotification } from "../lib/email.js";
 
 const router = Router();
+
+const registerLimiter = rateLimit({ limit: 5, windowMs: 10 * 60 * 1000, message: "Too many sign-up attempts. Please try again in 10 minutes." });
+const loginLimiter = rateLimit({ limit: 15, windowMs: 10 * 60 * 1000, message: "Too many login attempts. Please try again in 10 minutes." });
 
 async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -21,6 +27,7 @@ function formatUser(user: any) {
     mobile: user.mobile ?? null,
     city: user.city ?? null,
     isPremium: user.is_premium ?? false,
+    plan: user.plan ?? "free",
     premiumExpiresAt: user.premium_expires_at?.toISOString() ?? null,
     resumeCount: 0,
     coverLetterCount: 0,
@@ -61,6 +68,22 @@ async function handleRegister(req: any, res: any): Promise<void> {
   const user = inserted[0];
 
   const token = jwt.sign({ id: user.id, email: user.email });
+
+  try {
+    await db.insert(emailPreferencesTable).values({ userId: user.id }).onConflictDoNothing();
+  } catch (err) {
+    // non-fatal
+  }
+
+  sendWelcomeEmail({ id: user.id, name: user.name, email: user.email }).catch(() => {});
+  createNotification({
+    userId: user.id,
+    type: "welcome",
+    title: "Welcome to Career Boost AI! 🎉",
+    body: "Your account is ready. Build your resume and start practicing interviews.",
+    link: "/dashboard",
+  }).catch(() => {});
+
   res.status(201).json({ user: formatUser(user), token });
 }
 
@@ -109,13 +132,13 @@ async function handleMe(req: any, res: any): Promise<void> {
 }
 
 // Primary routes
-router.post("/users/register", handleRegister);
-router.post("/users/login", handleLogin);
+router.post("/users/register", registerLimiter, handleRegister);
+router.post("/users/login", loginLimiter, handleLogin);
 router.get("/users/me", handleMe);
 
 // Auth aliases (for backward compatibility & frontend flexibility)
-router.post("/auth/register", handleRegister);
-router.post("/auth/login", handleLogin);
+router.post("/auth/register", registerLimiter, handleRegister);
+router.post("/auth/login", loginLimiter, handleLogin);
 router.get("/auth/me", handleMe);
 
 router.get("/users/me/dashboard", async (req, res): Promise<void> => {

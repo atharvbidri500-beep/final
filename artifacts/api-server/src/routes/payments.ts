@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, paymentsTable, qrCodesTable, supportersTable, usersTable } from "@workspace/db";
-import { sendPaymentNotification } from "../lib/email.js";
+import { sendPaymentNotification, sendPaymentReceivedEmail, createNotification } from "../lib/email.js";
+import { PLANS, type PlanId, type Cycle, formatPlanLabel } from "../lib/subscriptions.js";
 
 const router = Router();
 
@@ -29,27 +30,49 @@ router.get("/payments", async (req, res): Promise<void> => {
 
 router.post("/payments", async (req, res): Promise<void> => {
   const userId = (req as any).userId as number | undefined;
-  const { fullName, mobile, upiTransactionId, amount, plan } = req.body;
-  if (!fullName || !mobile || !upiTransactionId || !amount || !plan) {
+  const { fullName, mobile, upiTransactionId, plan, cycle } = req.body;
+  if (!fullName || !mobile || !upiTransactionId || !plan) {
     res.status(400).json({ error: "All fields are required" });
     return;
   }
+  const planId = plan as PlanId;
+  const cycleId = (cycle as Cycle) ?? "monthly";
+  if (!PLANS[planId] || !["monthly", "yearly"].includes(cycleId)) {
+    res.status(400).json({ error: "plan must be 'pro' or 'premium' and cycle 'monthly' or 'yearly'" });
+    return;
+  }
+  const amount = PLANS[planId][cycleId];
 
   const [payment] = await db.insert(paymentsTable).values({
     userId: userId ?? null,
     fullName,
     mobile,
     upiTransactionId,
-    amount: Number(amount),
-    plan,
+    amount,
+    plan: `${planId}_${cycleId}`,
     status: "pending",
   }).returning();
 
   // Look up user email if logged in
   let userEmail: string | null = null;
   if (userId) {
-    const [user] = await db.select({ email: usersTable.email }).from(usersTable).where(eq(usersTable.id, userId));
+    const [user] = await db.select({ id: usersTable.id, name: usersTable.name, email: usersTable.email }).from(usersTable).where(eq(usersTable.id, userId));
     userEmail = user?.email ?? null;
+    if (user) {
+      sendPaymentReceivedEmail(user, {
+        amount: payment.amount,
+        plan: formatPlanLabel(planId, cycleId),
+        upiTransactionId: payment.upiTransactionId,
+        paymentId: payment.id,
+      }).catch(() => {});
+      createNotification({
+        userId: user.id,
+        type: "payment_received",
+        title: "Payment received — under review 🧾",
+        body: `Your ₹${payment.amount} payment request is being verified. We'll email you once approved.`,
+        link: "/premium",
+      }).catch(() => {});
+    }
   }
 
   // Send admin email notification (non-blocking)
@@ -59,7 +82,7 @@ router.post("/payments", async (req, res): Promise<void> => {
     mobile: payment.mobile,
     upiTransactionId: payment.upiTransactionId,
     amount: payment.amount,
-    plan: payment.plan,
+    plan: formatPlanLabel(planId, cycleId),
     submittedAt: payment.createdAt.toISOString(),
     userEmail,
   }).catch(() => {});

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
@@ -35,7 +36,7 @@ export default function JobMatch() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/resumes/job-match", {
+      const res = await fetch(apiUrl("/api/resumes/job-match"), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ resumeText, jobDescription }),

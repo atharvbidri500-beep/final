@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 const EXP_LEVELS = ["fresher", "1-2 years", "3-5 years"];
@@ -36,7 +37,7 @@ export default function CoverLetter() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch("/api/cover-letters", {
+      const res = await fetch(apiUrl("/api/cover-letters"), {
         method: "POST",
         headers,
         body: JSON.stringify(form),

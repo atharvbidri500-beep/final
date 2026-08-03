@@ -11,6 +11,8 @@ export const usersTable = pgTable("users", {
   city: text("city"),
   isPremium: boolean("is_premium").notNull().default(false),
   premiumExpiresAt: timestamp("premium_expires_at", { withTimezone: true }),
+  plan: text("plan").notNull().default("free"),
+  aiJobIntelConsent: boolean("ai_job_intel_consent").notNull().default(false),
   resumeCount: integer("resume_count").notNull().default(0),
   coverLetterCount: integer("cover_letter_count").notNull().default(0),
   interviewCount: integer("interview_count").notNull().default(0),

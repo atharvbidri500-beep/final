@@ -12,6 +12,7 @@ export function BottomNav() {
     { href: "/resume-builder", icon: FileText, label: "Resume" },
     { href: "/interview", icon: Mic, label: "Interview" },
     { href: "/career-roadmap", icon: Map, label: "Roadmap" },
+    { href: "/premium-hub", icon: Crown, label: "Pro" },
   ];
 
   if (token) {

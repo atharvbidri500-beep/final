@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Users, CreditCard, BarChart3, Check, X, QrCode, Loader2, LogOut, Bell, Search, Trash2, Crown, TrendingUp, RefreshCw, ChevronDown, UserCheck } from "lucide-react";
+import { Shield, Users, CreditCard, BarChart3, Check, X, QrCode, Loader2, LogOut, Bell, Search, Trash2, Crown, TrendingUp, RefreshCw, ChevronDown, UserCheck, HandCoins, Languages, Gauge, BadgeCheck, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getAdminToken, setAdminToken, clearAdminToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-type Tab = "stats" | "users" | "payments" | "qr";
+type Tab = "stats" | "users" | "payments" | "qr" | "supporters";
 
 function HirePilotLogo({ size = 28 }: { size?: number }) {
   return (
@@ -58,7 +59,7 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/login", {
+      const res = await fetch(apiUrl("/api/admin/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -175,12 +176,14 @@ export default function Admin() {
   const [userSearch, setUserSearch] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [upgradingId, setUpgradingId] = useState<number | null>(null);
+  const [revokingId, setRevokingId] = useState<number | null>(null);
+  const [deletingSupporterId, setDeletingSupporterId] = useState<number | null>(null);
 
   const h = token ? apiHeaders(token) : ({} as Record<string, string>);
 
   const pendingCountQ = useQuery<{ count: number }>({
     queryKey: ["admin-pending-count"],
-    queryFn: () => fetch("/api/admin/payments/pending-count", { headers: h }).then(r => r.json()),
+    queryFn: () => fetch(apiUrl("/api/admin/payments/pending-count"), { headers: h }).then(r => r.json()),
     enabled: !!token,
     refetchInterval: 30_000,
   });
@@ -188,26 +191,38 @@ export default function Admin() {
 
   const statsQ = useQuery<any>({
     queryKey: ["admin-stats"],
-    queryFn: () => fetch("/api/admin/stats", { headers: h }).then(r => r.json()),
+    queryFn: () => fetch(apiUrl("/api/admin/stats"), { headers: h }).then(r => r.json()),
     enabled: !!token && tab === "stats",
     refetchInterval: tab === "stats" ? 60_000 : false,
   });
 
   const usersQ = useQuery<any[]>({
     queryKey: ["admin-users", userSearch],
-    queryFn: () => fetch(`/api/admin/users${userSearch ? `?search=${encodeURIComponent(userSearch)}` : ""}`, { headers: h }).then(r => r.json()),
+    queryFn: () => fetch(apiUrl(`/api/admin/users${userSearch ? `?search=${encodeURIComponent(userSearch)}` : ""}`), { headers: h }).then(r => r.json()),
     enabled: !!token && tab === "users",
   });
 
   const paymentsQ = useQuery<any[]>({
     queryKey: ["admin-payments"],
-    queryFn: () => fetch("/api/admin/payments", { headers: h }).then(r => r.json()),
+    queryFn: () => fetch(apiUrl("/api/admin/payments"), { headers: h }).then(r => r.json()),
     enabled: !!token && tab === "payments",
     refetchInterval: tab === "payments" ? 30_000 : false,
   });
 
+  const qrQ = useQuery<any>({
+    queryKey: ["admin-qr", qrForm.type],
+    queryFn: () => fetch(apiUrl(`/api/admin/qr?type=${qrForm.type}`), { headers: h }).then(r => r.json()),
+    enabled: !!token && tab === "qr",
+  });
+
+  const supportersQ = useQuery<any[]>({
+    queryKey: ["admin-supporters"],
+    queryFn: () => fetch(apiUrl("/api/admin/supporters"), { headers: h }).then(r => r.json()),
+    enabled: !!token && tab === "supporters",
+  });
+
   const approveMut = useMutation({
-    mutationFn: (id: number) => fetch(`/api/admin/payments/${id}/approve`, { method: "POST", headers: h }).then(r => r.json()),
+    mutationFn: (id: number) => fetch(apiUrl(`/api/admin/payments/${id}/approve`), { method: "POST", headers: h }).then(r => r.json()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
       qc.invalidateQueries({ queryKey: ["admin-pending-count"] });
@@ -217,7 +232,7 @@ export default function Admin() {
   });
 
   const rejectMut = useMutation({
-    mutationFn: (id: number) => fetch(`/api/admin/payments/${id}/reject`, { method: "POST", headers: h }).then(r => r.json()),
+    mutationFn: (id: number) => fetch(apiUrl(`/api/admin/payments/${id}/reject`), { method: "POST", headers: h }).then(r => r.json()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
       qc.invalidateQueries({ queryKey: ["admin-pending-count"] });
@@ -229,7 +244,7 @@ export default function Admin() {
     if (!confirm("Delete this user and all their data?")) return;
     setDeletingId(id);
     try {
-      await fetch(`/api/admin/users/${id}`, { method: "DELETE", headers: h });
+      await fetch(apiUrl(`/api/admin/users/${id}`), { method: "DELETE", headers: h });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
       toast({ title: "User deleted." });
@@ -240,7 +255,7 @@ export default function Admin() {
   async function upgradeUser(id: number, name: string) {
     setUpgradingId(id);
     try {
-      const res = await fetch(`/api/admin/users/${id}/upgrade`, { method: "POST", headers: h, body: JSON.stringify({ plan: "monthly" }) });
+      const res = await fetch(apiUrl(`/api/admin/users/${id}/upgrade`), { method: "POST", headers: h, body: JSON.stringify({ plan: "monthly" }) });
       if (!res.ok) throw new Error("Failed");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       toast({ title: `✅ ${name} upgraded to Pro!` });
@@ -248,13 +263,40 @@ export default function Admin() {
     finally { setUpgradingId(null); }
   }
 
+  async function revokePremium(id: number, name: string) {
+    if (!confirm(`Revoke Pro access for ${name}?`)) return;
+    setRevokingId(id);
+    try {
+      const res = await fetch(apiUrl(`/api/admin/users/${id}/revoke-premium`), { method: "POST", headers: h });
+      if (!res.ok) throw new Error("Failed");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast({ title: `Pro access revoked for ${name}` });
+    } catch { toast({ title: "Error revoking access", variant: "destructive" }); }
+    finally { setRevokingId(null); }
+  }
+
+  async function deleteSupporter(id: number, name: string) {
+    if (!confirm(`Delete supporter ${name}?`)) return;
+    setDeletingSupporterId(id);
+    try {
+      const res = await fetch(apiUrl(`/api/admin/supporters/${id}`), { method: "DELETE", headers: h });
+      if (!res.ok) throw new Error("Failed");
+      qc.invalidateQueries({ queryKey: ["admin-supporters"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast({ title: "Supporter deleted." });
+    } catch { toast({ title: "Error deleting supporter", variant: "destructive" }); }
+    finally { setDeletingSupporterId(null); }
+  }
+
   async function saveQr() {
     if (!qrForm.imageUrl) { toast({ title: "Image URL is required", variant: "destructive" }); return; }
     setQrSaving(true);
     try {
-      const res = await fetch("/api/admin/qr", { method: "PUT", headers: h, body: JSON.stringify(qrForm) });
+      const res = await fetch(apiUrl("/api/admin/qr"), { method: "PUT", headers: h, body: JSON.stringify(qrForm) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
+      qc.invalidateQueries({ queryKey: ["admin-qr"] });
       toast({ title: "QR updated successfully!" });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -268,6 +310,7 @@ export default function Admin() {
     { id: "users", icon: Users, label: "Users" },
     { id: "payments", icon: CreditCard, label: "Payments" },
     { id: "qr", icon: QrCode, label: "QR Codes" },
+    { id: "supporters", icon: HandCoins, label: "Supporters" },
   ];
 
   const pendingPayments = (paymentsQ.data ?? []).filter((p: any) => p.status === "pending");
@@ -354,9 +397,13 @@ export default function Admin() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <StatCard label="Resumes" value={statsQ.data.totalResumes} icon={BarChart3} color="bg-violet-500" />
-                  <StatCard label="Interviews" value={statsQ.data.totalInterviews} icon={BarChart3} color="bg-cyan-500" />
+                  <StatCard label="Interviews" value={statsQ.data.totalInterviews} icon={Gauge} color="bg-cyan-500" />
                   <StatCard label="Cover Letters" value={statsQ.data.totalCoverLetters} icon={BarChart3} color="bg-pink-500" />
                   <StatCard label="Supporters" value={statsQ.data.totalSupporters} icon={UserCheck} color="bg-teal-500" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard label="English Tool Uses" value={statsQ.data.englishUses ?? 0} icon={Languages} color="bg-purple-500" sub="all-time" />
+                  <StatCard label="Google Sign-ins" value={statsQ.data.googleUsers ?? 0} icon={BadgeCheck} color="bg-indigo-500" sub={`${statsQ.data.googleUsers ?? 0} of ${statsQ.data.totalUsers} users`} />
                 </div>
 
                 {/* Registration trend */}
@@ -367,7 +414,8 @@ export default function Admin() {
                       <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+
+                  <div className="grid grid-cols-3 gap-4 text-center mb-5">
                     <div className="p-3 rounded-xl bg-violet-50 border border-violet-100">
                       <div className="text-2xl font-bold text-violet-700">{statsQ.data.weeklyNewUsers}</div>
                       <div className="text-xs text-muted-foreground mt-1">This Week</div>
@@ -381,6 +429,28 @@ export default function Admin() {
                       <div className="text-xs text-muted-foreground mt-1">All Time</div>
                     </div>
                   </div>
+
+                  {(statsQ.data.growthDays ?? []).length > 0 && (
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-2">New users per day (last 7 days)</div>
+                      <div className="flex items-end gap-2 h-28">
+                        {(statsQ.data.growthDays as { day: string; count: number }[]).map((d, i) => {
+                          const max = Math.max(1, ...(statsQ.data.growthDays as { day: string; count: number }[]).map(x => x.count));
+                          const h = Math.max(6, Math.round((d.count / max) * 100));
+                          return (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                              <span className="text-[10px] font-bold text-[#5B5CF6]">{d.count}</span>
+                              <div
+                                className={`w-full max-w-9 rounded-t-lg bg-gradient-to-t ${d.count > 0 ? "from-[#5B5CF6] to-[#8B5CF6]" : "from-muted to-muted"}`}
+                                style={{ height: `${h}px` }}
+                              />
+                              <span className="text-[10px] text-muted-foreground">{d.day}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -415,16 +485,36 @@ export default function Admin() {
                   {u.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm flex items-center gap-2">
+                  <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
                     {u.name}
                     {u.isPremium && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">Pro</span>}
+                    {u.authProvider === "google" && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center gap-0.5">
+                        <BadgeCheck className="w-3 h-3" /> Google
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">{u.email}{u.mobile ? ` · +91${u.mobile}` : ""}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {u.resumeCount} resumes · {u.interviewCount} interviews · {u.coverLetterCount} covers
+                    {u.resumeCount} resumes · {u.interviewCount} interviews · {u.coverLetterCount} covers · {u.englishUseCount ?? 0} english
+                    {u.isPremium && u.premiumExpiresAt && (
+                      <span className="text-amber-600"> · Pro till {new Date(u.premiumExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {u.isPremium && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => revokePremium(u.id, u.name)}
+                      disabled={revokingId === u.id}
+                      className="h-7 px-2 text-rose-600 border-rose-200 hover:bg-rose-50 text-xs gap-1"
+                    >
+                      {revokingId === u.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                      Revoke
+                    </Button>
+                  )}
                   {!u.isPremium && (
                     <Button
                       size="sm"
@@ -516,8 +606,19 @@ export default function Admin() {
 
             {/* Current QR preview */}
             <div className="p-4 rounded-2xl bg-card border border-border text-center">
-              <img src="/qr.jpg" alt="Current QR" className="w-48 h-48 object-contain mx-auto rounded-xl mb-2" />
-              <p className="text-xs text-muted-foreground">Current: Default QR (Shravani Bidri · 9579841359@fam)</p>
+              {qrQ.data?.imageUrl ? (
+                <img src={qrQ.data.imageUrl} alt="Current QR" className="w-48 h-48 object-contain mx-auto rounded-xl mb-2" />
+              ) : (
+                <div className="w-48 h-48 mx-auto rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground mb-2">
+                  <QrCode className="w-12 h-12 mb-2 opacity-40" />
+                  <p className="text-xs">No QR set yet</p>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {qrQ.data?.imageUrl
+                  ? `Type: ${qrForm.type}${qrQ.data.updatedAt ? ` · Updated ${new Date(qrQ.data.updatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST` : ""}`
+                  : "Users will see a placeholder until you add a QR"}
+              </p>
             </div>
 
             <div>
@@ -549,6 +650,62 @@ export default function Admin() {
             <Button onClick={saveQr} disabled={qrSaving} className="w-full bg-gradient-to-r from-[#5B5CF6] to-[#8B5CF6] text-white border-0">
               {qrSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update QR Code"}
             </Button>
+          </motion.div>
+        )}
+
+        {/* SUPPORTERS TAB */}
+        {tab === "supporters" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                {(supportersQ.data ?? []).length} supporter{(supportersQ.data ?? []).length !== 1 ? "s" : ""} · Total{" "}
+                <span className="font-bold text-pink-600">₹{(supportersQ.data ?? []).reduce((s, x) => s + Number(x.amount || 0), 0).toLocaleString("en-IN")}</span>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => supportersQ.refetch()} className="h-7 px-2 text-xs gap-1">
+                <RefreshCw className="w-3 h-3" /> Refresh
+              </Button>
+            </div>
+
+            {supportersQ.isLoading && [1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />)}
+
+            {(supportersQ.data ?? []).map((s: any) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  {s.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm flex items-center gap-2">
+                    {s.name}
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 font-bold">₹{s.amount}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">+91{s.mobile} · {s.upiTransactionId}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {new Date(s.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => deleteSupporter(s.id, s.name)}
+                  disabled={deletingSupporterId === s.id}
+                  className="h-7 px-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex-shrink-0"
+                >
+                  {deletingSupporterId === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                </Button>
+              </motion.div>
+            ))}
+
+            {!supportersQ.isLoading && (supportersQ.data ?? []).length === 0 && (
+              <div className="text-center py-16 text-muted-foreground">
+                <HandCoins className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>No supporters yet</p>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

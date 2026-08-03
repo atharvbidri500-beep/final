@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 /* ─── COLOR THEME ──────────────────────────────────────────────────────────── */
@@ -710,7 +711,7 @@ export default function ResumeBuilder() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch("/api/resumes", {
+      const res = await fetch(apiUrl("/api/resumes"), {
         method: "POST",
         headers,
         body: JSON.stringify({ ...form, title: form.jobRole || "My Resume", template: selected.id }),

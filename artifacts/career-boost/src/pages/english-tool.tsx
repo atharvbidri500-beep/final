@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
@@ -29,7 +30,7 @@ export default function EnglishTool() {
     if (!text.trim()) { toast({ title: "Please enter some text", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/interview/improve-english", {
+      const res = await fetch(apiUrl("/api/interview/improve-english"), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ text }),

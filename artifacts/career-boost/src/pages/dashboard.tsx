@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
 import { getToken, clearToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface UserStats {
@@ -139,7 +140,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
-    fetch("/api/users/me/dashboard", { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl("/api/users/me/dashboard"), { headers: { Authorization: `Bearer ${token}` } })
       .then(r => {
         if (!r.ok) throw new Error("Unauthorized");
         return r.json();
@@ -184,7 +185,7 @@ export default function Dashboard() {
               ) : (
                 <Link href="/premium">
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-sm font-medium cursor-pointer hover:bg-violet-100 transition-colors">
-                    <Crown className="w-3.5 h-3.5" /> Upgrade to Pro — from ₹99/month
+                    <Crown className="w-3.5 h-3.5" /> Upgrade to Pro — from ₹149/month
                   </div>
                 </Link>
               )}
@@ -303,7 +304,7 @@ export default function Dashboard() {
                     <div>
                       <div className="font-bold text-base mb-1">Upgrade to HirePilot Pro</div>
                       <div className="text-violet-200 text-sm">Unlimited resumes, interviews & cover letters</div>
-                      <div className="mt-2 text-xs font-semibold bg-white/20 inline-flex px-3 py-1 rounded-full">Starting ₹99/month · Pay via UPI</div>
+                      <div className="mt-2 text-xs font-semibold bg-white/20 inline-flex px-3 py-1 rounded-full">Starting ₹149/month · Pay via UPI</div>
                     </div>
                     <Crown className="w-10 h-10 text-yellow-300 fill-yellow-300 flex-shrink-0 ml-4" />
                   </div>

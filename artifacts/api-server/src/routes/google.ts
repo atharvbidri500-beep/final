@@ -1,8 +1,12 @@
 import { Router } from "express";
-import { pool } from "@workspace/db";
+import { pool, db, emailPreferencesTable } from "@workspace/db";
 import * as jwt from "../lib/jwt.js";
+import { rateLimit } from "../middlewares/rateLimit.js";
+import { sendWelcomeEmail, createNotification } from "../lib/email.js";
 
 const router = Router();
+
+const googleStartLimiter = rateLimit({ limit: 20, windowMs: 10 * 60 * 1000, message: "Too many Google sign-in attempts. Please try again later." });
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -34,6 +38,7 @@ function formatUser(user: any) {
     mobile: user.mobile ?? null,
     city: user.city ?? null,
     isPremium: user.is_premium ?? false,
+    plan: user.plan ?? "free",
     premiumExpiresAt: user.premium_expires_at?.toISOString() ?? null,
     resumeCount: 0,
     coverLetterCount: 0,
@@ -95,6 +100,17 @@ async function handleCallback(req: any, res: any): Promise<void> {
         [name, email]
       );
       user = inserted[0];
+      try {
+        await db.insert(emailPreferencesTable).values({ userId: user.id }).onConflictDoNothing();
+      } catch { /* non-fatal */ }
+      sendWelcomeEmail({ id: user.id, name: user.name, email: user.email }).catch(() => {});
+      createNotification({
+        userId: user.id,
+        type: "welcome",
+        title: "Welcome to Career Boost AI! 🎉",
+        body: "Your account is ready. Build your resume and start practicing interviews.",
+        link: "/dashboard",
+      }).catch(() => {});
     }
 
     const token = jwt.sign({ id: user.id, email: user.email });
@@ -104,7 +120,7 @@ async function handleCallback(req: any, res: any): Promise<void> {
   }
 }
 
-router.get("/auth/google", handleStart);
+router.get("/auth/google", googleStartLimiter, handleStart);
 router.get("/auth/google/callback", handleCallback);
 
 export default router;

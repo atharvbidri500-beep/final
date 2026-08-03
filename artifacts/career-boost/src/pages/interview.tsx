@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORIES = [
@@ -59,7 +60,7 @@ export default function Interview() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch("/api/interview/question", {
+      const res = await fetch(apiUrl("/api/interview/question"), {
         method: "POST",
         headers,
         body: JSON.stringify({ category: cat, count, previousQuestions: prevQs }),
@@ -90,7 +91,7 @@ export default function Interview() {
     let sid: number | null = null;
     if (token) {
       try {
-        const res = await fetch("/api/interview/sessions", {
+        const res = await fetch(apiUrl("/api/interview/sessions"), {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ category: cat }),
@@ -115,7 +116,7 @@ export default function Interview() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch("/api/interview/answer", {
+      const res = await fetch(apiUrl("/api/interview/answer"), {
         method: "POST",
         headers,
         body: JSON.stringify({ sessionId, question: currentQuestion, answer, category }),

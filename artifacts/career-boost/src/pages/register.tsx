@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { setToken, getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import GoogleIcon from "@/components/GoogleIcon";
 
 function HirePilotLogo() {
@@ -48,10 +49,10 @@ export default function Register() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const existingToken = getToken();
-  if (existingToken) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (existingToken) navigate("/");
+  }, [existingToken, navigate]);
+  if (existingToken) return null;
 
   function getFieldError(field: string) {
     if (field === "email" && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Invalid email";
@@ -68,7 +69,7 @@ export default function Register() {
     setLoading(true);
     setErrors({});
     try {
-      const res = await fetch("/api/users/register", {
+      const res = await fetch(apiUrl("/api/users/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -213,7 +214,7 @@ export default function Register() {
           </div>
 
           <a
-            href="/api/auth/google"
+            href={apiUrl("/api/auth/google")}
             className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
           >
             <GoogleIcon />

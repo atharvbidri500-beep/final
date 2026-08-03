@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { setToken, getToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 import GoogleIcon from "@/components/GoogleIcon";
 
 function HirePilotLogo() {
@@ -39,10 +40,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const existingToken = getToken();
-  if (existingToken) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (existingToken) navigate("/");
+  }, [existingToken, navigate]);
+  if (existingToken) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +53,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/users/login", {
+      const res = await fetch(apiUrl("/api/users/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email.trim().toLowerCase(), password: form.password }),
@@ -146,7 +147,7 @@ export default function Login() {
           </div>
 
           <a
-            href="/api/auth/google"
+            href={apiUrl("/api/auth/google")}
             className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
           >
             <GoogleIcon />

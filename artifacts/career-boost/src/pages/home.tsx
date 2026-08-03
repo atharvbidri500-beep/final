@@ -5,6 +5,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
 import { getToken, setToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
 function HirePilotLogo({ size = 40 }: { size?: number }) {
@@ -74,7 +76,7 @@ const plans = [
   },
   {
     name: "Pro Monthly",
-    price: "₹99",
+    price: "₹149",
     period: "per month",
     features: ["Unlimited resumes", "Unlimited interviews", "Unlimited cover letters", "Full ATS analysis", "Job match AI", "Priority support"],
     cta: "Go Pro Now",
@@ -84,18 +86,18 @@ const plans = [
   },
   {
     name: "Pro Yearly",
-    price: "₹499",
+    price: "₹1,499",
     period: "per year",
-    features: ["Everything in Pro", "Save ₹689 vs monthly", "Early access features", "Premium templates", "1-on-1 career tips", "Lifetime updates"],
+    features: ["Everything in Pro", "Save ₹289 vs monthly", "Early access features", "Premium templates", "1-on-1 career tips", "Lifetime updates"],
     cta: "Best Value",
     href: "/premium",
     highlight: false,
-    badge: "Save 58%",
+    badge: "Save 16%",
   },
 ];
 
 const faqs = [
-  { q: "Is HirePilot free to use?", a: "Yes! Our free plan gives you access to all core features with usage limits. Upgrade to Pro for unlimited access starting at just ₹99/month." },
+  { q: "Is HirePilot free to use?", a: "Yes! Our free plan gives you access to all core features with usage limits. Upgrade to Pro for unlimited access starting at just ₹149/month." },
   { q: "How does UPI payment work?", a: "Scan our UPI QR code, pay, and enter your UPI transaction ID. Our admin verifies and activates your Pro account within 1-2 hours." },
   { q: "Is my data secure?", a: "Yes, all your resume and personal data is encrypted and stored securely. We never share your data with third parties." },
   { q: "Which interview categories are available?", a: "We cover HR, Software Engineering, Sales, Customer Support, Banking, and Fresher-specific questions — 100+ questions in each category." },
@@ -106,6 +108,7 @@ const faqs = [
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const token = getToken();
+  const { toast } = useToast();
   const [liveStats, setLiveStats] = useState([
     { label: "Resumes Created", value: 12847, suffix: "+" },
     { label: "Interviews Practiced", value: 8923, suffix: "+" },
@@ -121,7 +124,16 @@ export default function Home() {
       window.location.href = "/";
       return;
     }
-    fetch("/api/stats/public")
+    const googleError = params.get("error");
+    if ((params.get("auth") === "google" && googleError) || params.get("auth") === "google_error") {
+      toast({
+        title: "Google sign-in failed",
+        description: googleError || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/");
+    }
+    fetch(apiUrl("/api/stats/public"))
       .then(r => r.json())
       .then(d => {
         setLiveStats([
@@ -428,6 +440,8 @@ export default function Home() {
         <div className="flex justify-center gap-4 text-xs text-muted-foreground">
           <Link href="/support"><span className="hover:text-foreground cursor-pointer">Support</span></Link>
           <Link href="/premium"><span className="hover:text-foreground cursor-pointer">Pricing</span></Link>
+          <Link href="/terms"><span className="hover:text-foreground cursor-pointer">Terms</span></Link>
+          <Link href="/privacy"><span className="hover:text-foreground cursor-pointer">Privacy</span></Link>
           <Link href="/admin"><span className="hover:text-foreground cursor-pointer">Admin</span></Link>
         </div>
       </footer>

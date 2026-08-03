@@ -1,4 +1,5 @@
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { initApiBase } from "./api";
 
 export const TOKEN_KEY = "careerBoostToken";
 export const ADMIN_TOKEN_KEY = "adminBoostAdminToken";
@@ -29,6 +30,7 @@ export function clearAdminToken(): void {
 
 // Initialize the API client auth token getter
 export function setupAuth() {
+  initApiBase();
   setAuthTokenGetter(() => {
     // If we're on the admin page, use admin token
     if (window.location.pathname.startsWith("/admin")) {

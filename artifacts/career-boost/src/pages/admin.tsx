@@ -255,7 +255,7 @@ export default function Admin() {
   async function upgradeUser(id: number, name: string) {
     setUpgradingId(id);
     try {
-      const res = await fetch(apiUrl(`/api/admin/users/${id}/upgrade`), { method: "POST", headers: h, body: JSON.stringify({ plan: "monthly" }) });
+      const res = await fetch(apiUrl(`/api/admin/users/${id}/upgrade`), { method: "POST", headers: h, body: JSON.stringify({ plan: "pro", cycle: "monthly" }) });
       if (!res.ok) throw new Error("Failed");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       toast({ title: `✅ ${name} upgraded to Pro!` });
